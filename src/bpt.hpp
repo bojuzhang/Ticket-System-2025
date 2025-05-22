@@ -1,3 +1,7 @@
+#pragma once
+#ifndef BPT_HPP
+#define BPT_HPP
+
 #include <climits>
 #include <string>
 #include <filesystem>
@@ -464,3 +468,5 @@ public:
     //     }
     // }
 };
+
+#endif // BPT_HPP

@@ -1,3 +1,7 @@
+#pragma once
+#ifndef MYSTL_HPP
+#define MYSTL_HPP
+
 #include <climits>
 #include <fstream>
 #include <string>
@@ -772,3 +776,5 @@ public:
 };
 
 } // namespace sjtu
+
+#endif // MYSTL_HPP
