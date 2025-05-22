@@ -342,9 +342,9 @@ public:
         return {-1, -1};
     }
 
-    vector<int> Find(const TKey &key) {
+    vector<TValue> Find(const TKey &key) {
         int pos = FindLeaf(rootpos, key);
-        vector<int> ans;
+        vector<TValue> ans;
         while (1) {
             if (pos == -1) {
                 break;
