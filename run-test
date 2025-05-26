@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <testcase_group_name>"
+  echo "Available testcase groups from config.json:"
+  jq -r '.Groups[].GroupName' testcases/config.json | sed 's/^/  /'
+  exit 1
+fi
+
 if [ ! -e testcases/config.json ]; then
   echo "./testcases/config.json does not exist, please extract testcases to that directory."
   exit 1
@@ -11,21 +18,14 @@ if [ ! -e "$(which jq)" ]; then
   exit 1
 fi
 
-if [ ! -e "testcases/$1" -o -z "$1" ]; then
-  if [ ! -z "$1" ]; then
-    echo "Testcase $1 does not exist."
-    exit 1
-  fi
-  echo "Usage: $0 <testcase name>"
-  echo "Example: $0 basic_1"
+if ! jq -e ".Groups[] | select(.GroupName == \"$1\")" testcases/config.json > /dev/null; then
+  echo "Testcase group '$1' not found in config.json"
+  echo "Available testcase groups:"
+  jq -r '.Groups[].GroupName' testcases/config.json | sed 's/^/  /'
   exit 1
 fi
 
-list=$(jq ".$1[]" < "testcases/config.json")
-if [ -z "$list" ]; then
-  echo "invalid config"
-  exit 1
-fi
+list=$(jq ".Groups[] | select(.GroupName == \"$1\") | .TestPoints[]" testcases/config.json)
 
 exename="code"
 if [ ! -e "$exename" ]; then
@@ -53,7 +53,7 @@ testdir="$(tmpdir)"
 cp "$exename" "$testdir/"
 exe="$testdir/$exename"
 cwd="$(pwd)"
-basedir="$cwd/testcases/$1"
+basedir="$cwd/testcases"
 
 cd "$testdir"
 
