@@ -1,0 +1,343 @@
+#include "bpt.hpp"
+#include "mystl.hpp"
+#include "usersystem.hpp"
+
+using sjtu::MyArray;
+
+struct Train {
+    string20 trainid;
+    int stationnum;
+    MyArray<string20, 100> stations;
+    int seatnum;
+    MyArray<int, 100> prices;
+    pair<int, int> starttime; // (hh, mm)
+    MyArray<int, 100> traveltimes;
+    MyArray<int, 100> stopovertimes;
+    pair<pair<int, int>, pair<int, int>> saledates; // (begin, end); (mm, dd);
+    char type;
+};
+
+class TrainSystem {
+private:
+    BPlusTree<string20, Train> trains;
+    BPlusTree<string20, bool> released;
+    struct RemainSeat {
+        int stationnum;
+        MyArray<int, 100> seats;
+    };
+    using TrainInDay = pair<pair<int, int>, string20>; // date, id
+    BPlusTree<TrainInDay, RemainSeat> remainseat;
+    struct TrainTicket {
+        string20 trainid;
+        int addday;
+        MyArray<int, 2> leaving, arriving;
+        int deltaday;
+        int time, cost;
+        int startpos;
+    };
+    struct TrainTime : TrainTicket {
+        bool operator < (const TrainTime &other) {
+            return (time != other.time) ? time < other.time : trainid < other.trainid;
+        }
+    };
+    struct TrainCost : TrainTicket {
+        bool operator < (const TrainCost &other) {
+            return (cost != other.cost) ? cost < other.cost : trainid < other.trainid;
+        }
+    };
+    BPlusTree<pair<string20, string20>, TrainTime> traintime;
+    BPlusTree<pair<string20, string20>, TrainCost> traincost;
+    BPlusTree<bool, string20> stations;
+
+public:
+    bool AddTrain(const Train &train) {
+        if (trains.Find(train.trainid).size()) {
+            return false;
+        }
+        trains.Insert(train.trainid, train);
+        return true;
+    }
+    bool DeleteTrain(const string20 &trainid) {
+        auto p = trains.Find(trainid);
+        if (!p.size()) {
+            return false;
+        }
+        Train train = p[0];
+        if (released.Find(trainid).size()) {
+            return false;
+        }
+        trains.Remove(trainid, train);
+        return true;
+    }
+    bool ReleaseTrain(const string20 &trainid) {
+        auto p = trains.Find(trainid);
+        if (!p.size()) {
+            return false;
+        }
+        Train train = p[0];
+        if (released.Find(trainid).size()) {
+            return false;
+        }
+        RemainSeat t;
+        t.stationnum = train.stationnum;
+        for (int i = 0; i < t.stationnum; i++) {
+            t.seats[i] = train.seatnum;
+        }
+        for (int m = train.saledates.first.first; m <= train.saledates.second.first; m++) {
+            int db = m == train.saledates.first.first ? train.saledates.first.second : 1;
+            int de = m == train.saledates.second.first ? train.saledates.second.second : 
+                        (m == 6 ? 30 : 31);
+            for (int d = db; d <= de; d++) {
+                remainseat.Insert(pair{m, d}, t);
+            }
+        }
+        int sminutes = train.starttime.first * 60 + train.starttime.second;
+        for (int i = 0; i + 1 < train.stationnum; i++) {
+            int time = train.traveltimes[i];
+            int cost = train.prices[i];
+            MyArray<int, 2> lea, arr;
+            lea[0] = sminutes % 1440 / 60, lea[1] = sminutes % 1440 % 60;
+            int addday = sminutes / 1440;
+            for (int j = i + 1; j < train.stationnum; j++) {
+                int minutes = sminutes + time;
+                arr[0] = minutes % 1440 / 60, arr[1] = minutes % 1440 % 60;
+                traintime.Insert(pair{train.stations[i], train.stations[j]}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i});
+                traincost.Insert(pair{train.stations[i], train.stations[j]}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i});
+                time += train.stopovertimes[j - 1] + train.traveltimes[j];
+                cost += train.prices[j];
+            }
+            sminutes += train.traveltimes[i];
+            if (i > 1) sminutes += train.traveltimes[i - 1];
+        }
+        for (int i = 0; i < train.stationnum; i++) {
+            stations.Insert(1, train.stations[i]);
+        }
+        return true;
+    }
+    struct TrainInfo {
+        string20 station;
+        MyArray<int, 4> arriving, leaving;
+        int price, seat;
+    };
+    vector<TrainInfo> QueryTrain(const string20 &trainid, pair<int, int> date) {
+        auto p = trains.Find(trainid);
+        if (!p.size()) {
+            return {};
+        }
+        Train train = p[0];
+        int m = date.first, d = date.second;
+        if (m < train.saledates.first.first || m > train.saledates.second.first
+        || (m == train.saledates.first.first && d < train.saledates.first.second)
+        || (m == train.saledates.second.first && d > train.saledates.second.second)) {
+            return {};
+        }
+        vector<TrainInfo> ans;
+        MyArray<int, 4> arr, lea;
+        arr[0] = arr[1] = arr[2] = arr[3] = -1;
+        lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
+        ans.push_back({train.stations[0], arr, lea, train.seatnum});
+        int minutes = lea[2] * 60 + lea[3];
+        for (int i = 0; i + 2 < train.stationnum; i++) {
+            minutes += train.traveltimes[i];
+            if (minutes > 1440) {
+                minutes -= 1440;
+                d++;
+            }
+            if (d > (m == 6 ? 30 : 31)) {
+                d = 1;
+                m++;
+            }
+            arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
+            minutes += train.stopovertimes[i];
+            if (minutes > 1440) {
+                minutes -= 1440;
+                d++;
+            }
+            if (d > (m == 6 ? 30 : 31)) {
+                d = 1;
+                m++;
+            }
+            lea[0] = m, lea[1] = d, lea[2] = minutes / 60, lea[3] = minutes % 60;
+            ans.push_back({train.stations[i + 1], arr, lea, train.seatnum});
+        }
+        minutes += train.traveltimes[train.stationnum - 2];
+        if (minutes > 1440) {
+            minutes -= 1440;
+            d++;
+        }
+        if (d > (m == 6 ? 30 : 31)) {
+            d = 1;
+            m++;
+        }
+        arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
+        lea[0] = lea[1] = lea[2] = lea[3] = -1;
+        ans.push_back({train.stations[train.stationnum - 2], arr, lea, -1});
+        if (!released.Find(trainid).size()) {
+            m = date.first, d = date.second;
+            auto p = remainseat.Find(pair{pair{m, d}, trainid})[0];
+            for (int i = 0; i + 1 < train.stationnum; i++) {
+                ans[i].seat = p.seats[i];
+            }
+        }
+        return ans;
+    }
+    struct TicketInfo {
+        string20 trainid;
+        string20 from, to;
+        MyArray<int, 4> arriving, leaving;
+        int price, seat;
+        TrainTicket ticketinfo;
+    }; 
+    enum class TicketOrder {kTIME, kCOST};
+    vector<TicketInfo> QueryTicket(const string20 &st, const string20 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
+        vector<TicketInfo> ans;
+        int m = date.first, d = date.second;
+        if (ord == TicketOrder::kTIME) {
+            auto ve = traintime.Find(pair{st, ed});
+            MyArray<int, 4> lea, arr;
+            for (auto p : ve) {
+                TicketInfo t;
+                t.trainid = p.trainid;
+                t.from = st, t.to = ed;
+                lea[0] = m, lea[1] = d, lea[2] = p.leaving[0], lea[3] = p.leaving[1];
+                arr[0] = m, arr[1] = d + p.deltaday, arr[2] = p.arriving[0], arr[3] = p.arriving[1];
+                if (arr[1] > (m == 6 ? 30 : 31)) {
+                    arr[1] -= (m == 6 ? 30 : 31);
+                    arr[0]++;
+                }
+                t.arriving = arr, t.leaving = lea;
+                t.price = p.cost;
+                int am = m, ad = d - p.addday;
+                if (ad < 1) {
+                    ad -= (m == 7 ? 30 : 31);
+                    m--;
+                }
+                auto seat = remainseat.Find(pair{pair{m, d}, t.trainid});
+                if (!seat.size()) {
+                    continue;
+                } 
+                t.seat = seat[0].seats[p.startpos];
+                t.ticketinfo = p;
+                ans.push_back(t);
+            }
+        } else {
+            auto ve = traincost.Find(pair{st, ed});
+            MyArray<int, 4> lea, arr;
+            for (auto p : ve) {
+                TicketInfo t;
+                t.trainid = p.trainid;
+                t.from = st, t.to = ed;
+                lea[0] = m, lea[1] = d, lea[2] = p.leaving[0], lea[3] = p.leaving[1];
+                arr[0] = m, arr[1] = d + p.deltaday, arr[2] = p.arriving[0], arr[3] = p.arriving[1];
+                if (arr[1] > (m == 6 ? 30 : 31)) {
+                    arr[1] -= (m == 6 ? 30 : 31);
+                    arr[0]++;
+                }
+                t.arriving = arr, t.leaving = lea;
+                t.price = p.cost;
+                int am = m, ad = d - p.addday;
+                if (ad < 1) {
+                    ad -= (m == 7 ? 30 : 31);
+                    m--;
+                }
+                auto seat = remainseat.Find(pair{pair{m, d}, t.trainid});
+                if (!seat.size()) {
+                    continue;
+                } 
+                t.seat = seat[0].seats[p.startpos];
+                t.ticketinfo = p;
+                ans.push_back(t);
+            }
+        }
+        return ans;
+    }
+    int BuyTickets(const string20 &trainid, pair<int, int> date, const string20 &st, const string20 &ed, int n) {
+        auto p = trains.Find(trainid);
+        if (!p.size()) {
+            return 0;
+        }
+        auto train = p[0];
+        auto q = remainseat.Find(pair{date, trainid});
+        if (!q.size()) {
+            return 0;
+        }
+        auto seats = q[0];
+        remainseat.Remove(pair{date, trainid}, seats);
+        int costs = 0;
+        bool flag = 0;
+        for (int i = 0; i < train.stationnum; i++) {
+            if (train.stations[i] == st) {
+                flag = 1;
+            }
+            if (train.stations[i] == ed) {
+                flag = 0;
+            }
+            if (flag) {
+                if (seats.seats[i] < n) {
+                    return 0;
+                }
+            }
+        }
+        flag = 0;
+        for (int i = 0; i < train.stationnum; i++) {
+            if (train.stations[i] == st) {
+                flag = 1;
+            }
+            if (train.stations[i] == ed) {
+                flag = 0;
+            }
+            if (flag) {
+                seats.seats[i] -= n;
+                costs += n * train.prices[i];
+            }
+        }
+        return costs;
+    }
+    struct TransferTicket {
+        TicketInfo first;
+        TicketInfo second;
+    };
+    bool TranseferTime(const TransferTicket &a, const TransferTicket &b) {
+        if (a.first.ticketinfo.time + a.second.ticketinfo.time != b.first.ticketinfo.time + b.second.ticketinfo.time) {
+            return a.first.ticketinfo.time + a.second.ticketinfo.time < b.first.ticketinfo.time + b.second.ticketinfo.time;
+        }
+        if (a.first.ticketinfo.cost + a.second.ticketinfo.cost != b.first.ticketinfo.cost + b.second.ticketinfo.cost) {
+            return a.first.ticketinfo.cost + a.second.ticketinfo.cost < b.first.ticketinfo.cost + b.second.ticketinfo.cost;
+        }
+        if (a.first.trainid != b.first.trainid) {
+            return a.first.trainid < b.first.trainid;
+        }
+        return a.second.trainid < b.second.trainid;
+    }
+    bool TranseferCost(const TransferTicket &a, const TransferTicket &b) {
+        if (a.first.ticketinfo.cost + a.second.ticketinfo.cost != b.first.ticketinfo.cost + b.second.ticketinfo.cost) {
+            return a.first.ticketinfo.cost + a.second.ticketinfo.cost < b.first.ticketinfo.cost + b.second.ticketinfo.cost;
+        }
+        if (a.first.ticketinfo.time + a.second.ticketinfo.time != b.first.ticketinfo.time + b.second.ticketinfo.time) {
+            return a.first.ticketinfo.time + a.second.ticketinfo.time < b.first.ticketinfo.time + b.second.ticketinfo.time;
+        }
+        if (a.first.trainid != b.first.trainid) {
+            return a.first.trainid < b.first.trainid;
+        }
+        return a.second.trainid < b.second.trainid;
+    }
+    pair<TransferTicket, bool> QueryTransfer(const string20 &st, const string20 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
+        auto allstation = stations.Find(1);
+        TransferTicket ans;
+        bool flag = 0;
+        for (auto trans : allstation) {
+            auto p1 = QueryTicket(st, trans, date, ord);
+            auto p2 = QueryTicket(trans, ed, date, ord);
+            if (!p1.size() || !p2.size()) {
+                continue;
+            }
+            TransferTicket res = {p1[0], p2[0]};
+            if (!flag || (ord == TicketOrder::kCOST && TranseferCost(res, ans))
+            || (ord == TicketOrder::kTIME && TranseferTime(res, ans))) {
+                ans = res;
+                flag = 1;    
+            }
+        }
+        return {ans, flag};
+    }
+};
