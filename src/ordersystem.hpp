@@ -1,3 +1,7 @@
+#pragma once
+#ifndef ORDERSYSTEM_HPP
+#define ORDERSYSTEM_HPP
+
 #include "bpt.hpp"
 #include "mystl.hpp"
 #include "trainsystem.hpp"
@@ -54,3 +58,5 @@ public:
         return true;
     }
 };
+
+#endif

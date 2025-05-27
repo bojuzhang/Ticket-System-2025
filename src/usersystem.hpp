@@ -1,3 +1,7 @@
+#pragma once
+#ifndef USERSYSTEM_HPP
+#define USERSYSTEM_HPP
+
 #include "bpt.hpp"
 #include "mystl.hpp"
 
@@ -63,3 +67,5 @@ public:
         users_.Insert(user.username, user);
     }
 };
+
+#endif

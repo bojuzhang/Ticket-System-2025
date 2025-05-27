@@ -1,3 +1,7 @@
+#pragma once
+#ifndef TRAINSYSTEM_HPP
+#define TRAINSYSTEM_HPP
+
 #include "bpt.hpp"
 #include "mystl.hpp"
 #include "usersystem.hpp"
@@ -341,3 +345,5 @@ public:
         return {ans, flag};
     }
 };
+
+#endif
