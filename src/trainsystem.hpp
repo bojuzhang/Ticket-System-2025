@@ -23,14 +23,14 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<string20, Train> trains;
-    BPlusTree<string20, bool> released;
+    BPlusTree<string20, Train> trains{"trains"};
+    BPlusTree<string20, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
         MyArray<int, 100> seats;
     };
     using TrainInDay = pair<pair<int, int>, string20>; // date, id
-    BPlusTree<TrainInDay, RemainSeat> remainseat;
+    BPlusTree<TrainInDay, RemainSeat> remainseat{"remainseat"};
     struct TrainTicket {
         string20 trainid;
         int addday;
@@ -49,9 +49,9 @@ private:
             return (cost != other.cost) ? cost < other.cost : trainid < other.trainid;
         }
     };
-    BPlusTree<pair<string20, string20>, TrainTime> traintime;
-    BPlusTree<pair<string20, string20>, TrainCost> traincost;
-    BPlusTree<bool, string20> stations;
+    BPlusTree<pair<string20, string20>, TrainTime> traintime{"traintime"};
+    BPlusTree<pair<string20, string20>, TrainCost> traincost{"traincost"};
+    BPlusTree<bool, string20> stations{"stations"};
 
 public:
     bool AddTrain(const Train &train) {

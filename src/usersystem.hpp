@@ -20,8 +20,8 @@ struct User {
 
 class UserSystem {
 private:
-    BPlusTree<string20, User> users_;
-    BPlusTree<bool, string20> loggined_;
+    BPlusTree<string20, User> users_{"users"};
+    BPlusTree<bool, string20> loggined_{"loggined"};
 
 public:
     bool AddUser(const User &user) {
