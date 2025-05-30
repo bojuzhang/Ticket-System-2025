@@ -123,7 +123,7 @@ public:
         MyArray<int, 4> arriving, leaving;
         int price, seat;
     };
-    vector<TrainInfo> QueryTrain(const string20 &trainid, pair<int, int> date) {
+    pair<vector<TrainInfo>, char> QueryTrain(const string20 &trainid, pair<int, int> date) {
         auto p = trains.Find(trainid);
         if (!p.size()) {
             return {};
@@ -139,8 +139,9 @@ public:
         MyArray<int, 4> arr, lea;
         arr[0] = arr[1] = arr[2] = arr[3] = -1;
         lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
-        ans.push_back({train.stations[0], arr, lea, train.seatnum});
+        ans.push_back({train.stations[0], arr, lea, 0, train.seatnum});
         int minutes = lea[2] * 60 + lea[3];
+        int prices = 0;
         for (int i = 0; i + 2 < train.stationnum; i++) {
             minutes += train.traveltimes[i];
             if (minutes > 1440) {
@@ -162,7 +163,8 @@ public:
                 m++;
             }
             lea[0] = m, lea[1] = d, lea[2] = minutes / 60, lea[3] = minutes % 60;
-            ans.push_back({train.stations[i + 1], arr, lea, train.seatnum});
+            prices += train.prices[i];
+            ans.push_back({train.stations[i + 1], arr, lea, prices, train.seatnum});
         }
         minutes += train.traveltimes[train.stationnum - 2];
         if (minutes > 1440) {
@@ -175,15 +177,16 @@ public:
         }
         arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
         lea[0] = lea[1] = lea[2] = lea[3] = -1;
-        ans.push_back({train.stations[train.stationnum - 2], arr, lea, -1});
-        if (!released.Find(trainid).size()) {
+        prices += train.prices[train.stationnum - 2];
+        ans.push_back({train.stations[train.stationnum - 2], arr, lea, prices, -1});
+        if (released.Find(trainid).size()) {
             m = date.first, d = date.second;
             auto p = remainseat.Find(pair{pair{m, d}, trainid})[0];
             for (int i = 0; i + 1 < train.stationnum; i++) {
                 ans[i].seat = p.seats[i];
             }
         }
-        return ans;
+        return {ans, train.type};
     }
     struct TicketInfo {
         string20 trainid;
@@ -255,20 +258,93 @@ public:
         }
         return ans;
     }
-    int BuyTickets(const string20 &trainid, pair<int, int> date, const string20 &st, const string20 &ed, int n) {
+    struct OrderInfo {
+        MyArray<int, 4> leaving, arriving;
+        int price = 0;
+    };
+    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string20 &st, const string20 &ed, int n) {
         auto p = trains.Find(trainid);
         if (!p.size()) {
-            return 0;
+            return {OrderInfo(), 0};
         }
         auto train = p[0];
+        bool flag = 0;
+        OrderInfo order;
+        int m = date.first, d = date.second;
+        MyArray<int, 4> lea, arr;
+        int adddays = 0;
+        arr[0] = arr[1] = arr[2] = arr[3] = -1;
+        lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
+        int minutes = lea[2] * 60 + lea[3];
+        if (train.stations[0] == st) {
+            order.leaving = lea;
+        }
+        for (int i = 0; i + 2 < train.stationnum; i++) {
+            minutes += train.traveltimes[i];
+            if (minutes > 1440) {
+                minutes -= 1440;
+                d++;
+                ++adddays;
+            }
+            if (d > (m == 6 ? 30 : 31)) {
+                d = 1;
+                m++;
+            }
+            arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
+            minutes += train.stopovertimes[i];
+            if (minutes > 1440) {
+                minutes -= 1440;
+                d++;
+                ++adddays;
+            }
+            if (d > (m == 6 ? 30 : 31)) {
+                d = 1;
+                m++;
+            }
+            lea[0] = m, lea[1] = d, lea[2] = minutes / 60, lea[3] = minutes % 60;
+            if (train.stations[i + 1] == st) {
+                order.leaving = lea;
+            } else if (train.stations[i + 1] == ed) {
+                order.arriving = arr;
+            }
+        }
+        minutes += train.traveltimes[train.stationnum - 2];
+        if (minutes > 1440) {
+            minutes -= 1440;
+            d++;
+            ++adddays;
+        }
+        if (d > (m == 6 ? 30 : 31)) {
+            d = 1;
+            m++;
+        }
+        arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
+        lea[0] = lea[1] = lea[2] = lea[3] = -1;
+        if (train.stations[train.stationnum - 1] == ed) {
+            order.arriving = arr;
+        }
+        order.arriving[1] -= adddays;
+        if (order.arriving[1] < 0) {
+            order.arriving[1] += (order.arriving[0] == 7 ? 30 : 31);
+            order.arriving[0]--;
+        }
+        order.leaving[1] -= adddays;
+        if (order.leaving[1] < 0) {
+            order.leaving[1] += (order.leaving[0] == 7 ? 30 : 31);
+            order.leaving[0]--;
+        }
+        date.second -= adddays;
+        if (date.second < 0) {
+            date.second += (date.first == 7 ? 30 : 31);
+            date.first--;
+        }
         auto q = remainseat.Find(pair{date, trainid});
         if (!q.size()) {
-            return 0;
+            return {OrderInfo(), 0};
         }
         auto seats = q[0];
-        remainseat.Remove(pair{date, trainid}, seats);
         int costs = 0;
-        bool flag = 0;
+        flag = 0;
         for (int i = 0; i < train.stationnum; i++) {
             if (train.stations[i] == st) {
                 flag = 1;
@@ -278,11 +354,11 @@ public:
             }
             if (flag) {
                 if (seats.seats[i] < n) {
-                    return 0;
+                    return {OrderInfo(), 0};
                 }
             }
         }
-        flag = 0;
+        remainseat.Remove(pair{date, trainid}, seats);
         for (int i = 0; i < train.stationnum; i++) {
             if (train.stations[i] == st) {
                 flag = 1;
@@ -293,9 +369,11 @@ public:
             if (flag) {
                 seats.seats[i] -= n;
                 costs += n * train.prices[i];
+                order.price += train.prices[i];
             }
         }
-        return costs;
+        remainseat.Insert(pair{date, trainid}, seats);
+        return {order, costs};
     }
     struct TransferTicket {
         TicketInfo first;

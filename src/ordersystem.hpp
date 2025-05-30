@@ -11,7 +11,8 @@ struct Order {
     int time;
     string20 username;
     string20 trainid;
-    TrainSystem::TicketInfo ticketinfo;
+    TrainSystem::OrderInfo orderinfo;
+    string20 from, to;
     int num;
     OrderStatus status;
     bool operator < (const Order &other) {
@@ -40,22 +41,20 @@ public:
     vector<Order> GetRefund(const string20 &trainid) {
         return trainorder.Find(trainid);
     }
-    bool Refund(const string20 &s, int n) {
-        auto p = userorder.Find(s);
-        if (p.size() < n) {
-            return false;
-        }
-        auto order = p[n - 1];
+    bool Refund(Order order) {
         if (order.status == OrderStatus::kREFUNDED) {
             return false;
         }
-        userorder.Remove(s, order);
+        userorder.Remove(order.username, order);
         if (order.status == OrderStatus::kPENDING) {
-            trainorder.Remove(s, order);
+            trainorder.Remove(order.trainid, order);
         }
         order.status = OrderStatus::kREFUNDED;
-        userorder.Insert(s, order);
+        userorder.Insert(order.username, order);
         return true;
+    }
+    vector<Order> QueryOrder(const string20 &username) {
+        return  userorder.Find(username);
     }
 };
 

@@ -43,8 +43,12 @@ public:
         users_.Insert(user.username, user);
         loggined_.Remove(1, user.username);
     }
-    User QueryUser(const string20 &username) {
-        return users_.Find(username)[0];
+    pair<User, bool> QueryUser(const string20 &username) {
+        auto ve = users_.Find(username);
+        if (ve.empty()) {
+            return {User(), 0};
+        }
+        return {ve[0], 1};
     }
     void ModifyPassword(User user, const string30 &new_password) {
         users_.Remove(user.username, user);
