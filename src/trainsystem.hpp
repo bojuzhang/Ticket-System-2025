@@ -11,7 +11,7 @@ using sjtu::MyArray;
 struct Train {
     string20 trainid;
     int stationnum;
-    MyArray<string20, 100> stations;
+    MyArray<string30, 100> stations;
     int seatnum;
     MyArray<int, 100> prices;
     pair<int, int> starttime; // (hh, mm)
@@ -115,9 +115,9 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<string20, string20>, TrainTime> traintime{"traintime"};
-    BPlusTree<pair<string20, string20>, TrainCost> traincost{"traincost"};
-    BPlusTree<bool, string20> stations{"stations"};
+    BPlusTree<pair<string30, string30>, TrainTime> traintime{"traintime"};
+    BPlusTree<pair<string30, string30>, TrainCost> traincost{"traincost"};
+    BPlusTree<bool, string30> stations{"stations"};
 
 public:
     void Clear() {
@@ -193,7 +193,7 @@ public:
         return true;
     }
     struct TrainInfo {
-        string20 station;
+        string30 station;
         MyArray<int, 4> arriving, leaving;
         int price, seat;
     };
@@ -264,13 +264,13 @@ public:
     }
     struct TicketInfo {
         string20 trainid;
-        string20 from, to;
+        string30 from, to;
         MyArray<int, 4> arriving, leaving;
         int price, seat;
         TrainTicket ticketinfo;
     }; 
     enum class TicketOrder {kTIME, kCOST};
-    vector<TicketInfo> QueryTicket(const string20 &st, const string20 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
+    vector<TicketInfo> QueryTicket(const string30 &st, const string30 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
         vector<TicketInfo> ans;
         int m = date.first, d = date.second;
         if (ord == TicketOrder::kTIME) {
@@ -336,7 +336,7 @@ public:
         MyArray<int, 4> leaving, arriving;
         int price = 0;
     };
-    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string20 &st, const string20 &ed, int n) {
+    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string30 &st, const string30 &ed, int n) {
         auto p = trains.Find(trainid);
         if (!p.size()) {
             return {OrderInfo(), 0};
@@ -477,7 +477,7 @@ public:
         }
         return a.second.trainid < b.second.trainid;
     }
-    pair<TransferTicket, bool> QueryTransfer(const string20 &st, const string20 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
+    pair<TransferTicket, bool> QueryTransfer(const string30 &st, const string30 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kCOST) {
         auto allstation = stations.Find(1);
         TransferTicket ans;
         bool flag = 0;

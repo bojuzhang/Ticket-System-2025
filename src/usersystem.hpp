@@ -6,14 +6,14 @@
 #include "bpt.hpp"
 #include "mystl.hpp"
 
-using string10 = sjtu::MyString<10>;
+using string15 = sjtu::MyString<15>;
 using string20 = sjtu::MyString<20>;
 using string30 = sjtu::MyString<30>;
 
 struct User {
     string20 username;
     string30 password;
-    string10 name;
+    string15 name;
     string30 mailaddr;
     int privilege;
     bool loggined = 0;
@@ -85,7 +85,7 @@ public:
         user.password = new_password;
         users_.Insert(user.username, user);
     }
-    void ModifyName(User user, const string10 &new_name) {
+    void ModifyName(User user, const string15 &new_name) {
         users_.Remove(user.username, user);
         user.name = new_name;
         users_.Insert(user.username, user);

@@ -11,7 +11,7 @@ struct Order {
     string20 username;
     string20 trainid;
     TrainSystem::OrderInfo orderinfo;
-    string20 from, to;
+    string30 from, to;
     int num;
     OrderStatus status;
     bool operator < (const Order &other) {

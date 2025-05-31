@@ -298,7 +298,7 @@ private:
         TrainSystem::TicketOrder order = TrainSystem::TicketOrder::kTIME;
         auto s = GetToken();
         pair<int, int> date;
-        string20 from, to;
+        string30 from, to;
         for (int i = 0; i < static_cast<int>(s.size()); i += 2) {
             if (s[i] == "-s") {
                 from = s[i + 1];
@@ -332,7 +332,7 @@ private:
         TrainSystem::TicketOrder order = TrainSystem::TicketOrder::kTIME;
         auto s = GetToken();
         pair<int, int> date;
-        string20 from, to;
+        string30 from, to;
         for (int i = 0; i < static_cast<int>(s.size()); i += 2) {
             if (s[i] == "-s") {
                 from = s[i + 1];
@@ -370,7 +370,7 @@ private:
         string20 username;
         string20 trainid;
         pair<int, int> date;
-        string20 from, to;
+        string30 from, to;
         int n;
         bool q = false;
         for (int i = 0; i < static_cast<int>(s.size()); i += 2) {
