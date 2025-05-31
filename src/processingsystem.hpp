@@ -93,8 +93,14 @@ private:
                 password = s[i + 1];
             }
         }
+        // std::cerr << username << " " << password << "\n";
         auto p = usersys.QueryUser(username);
-        if (p.second || p.first.loggined) {
+        // std::cerr << p.second << " " << p.first.username << " " << p.first.loggined << " " << p.first.password << "\n";
+        if (!p.second || p.first.loggined) {
+            std::cout << -1 << "\n";
+            return;
+        }
+        if (p.first.password != password) {
             std::cout << -1 << "\n";
             return;
         }
@@ -105,7 +111,7 @@ private:
         auto s = GetToken();
         string20 username = s[1];
         auto p = usersys.QueryUser(username);
-        if (p.second || p.first.loggined) {
+        if (!p.second || !p.first.loggined) {
             std::cout << -1 << "\n";
             return;
         }
@@ -125,6 +131,8 @@ private:
         }
         auto p = usersys.QueryUser(username);
         auto curp = usersys.QueryUser(cur_username);
+        // std::cerr << "test " << username << " " << cur_username << "\n";
+        // std::cerr << "test " << p.second << " " << curp.second << " " << sizeof(User) + sizeof(string20) << "\n";
         if (!p.second || !curp.second) {
             std::cout << -1 << "\n";
             return;

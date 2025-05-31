@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #ifndef BPT_HPP
 #define BPT_HPP
 
@@ -15,7 +16,7 @@ using sjtu::vector;
 template <class TKey, class TValue>
 class BPlusTree {
 private:
-    static const int kORDER = ((4096 * 4 - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
+    static const int kORDER = ((4096 * 8 - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
     static constexpr int kMAX_KEYS = kORDER - 1;
     static constexpr int kMIN_KEYS = (kORDER + 1) / 2 - 1;
     using kv_type = pair<TKey, TValue>;
@@ -47,6 +48,7 @@ private:
 
 public:
     BPlusTree(const std::string &filename) {
+        // std::cerr << "test " << filename << " " << kORDER << "\n";
         if (!std::filesystem::exists(filename)) {
             file.initialise(filename, 1);
             Node root;
@@ -101,7 +103,8 @@ public:
             while (i < node.keycount && node.kvs[i] < pair{key, value}) {
                 i++;
             }
-            if (node.kvs[i] == pair{key, value})
+            // std::cerr << "   InsertRec: " << node.keycount << " " << i << "\n";
+            if (i < node.keycount && node.kvs[i] == pair{key, value})
                 return {kv_type(), -1};
             for (int k = node.keycount; k > i; k--) {
                 node.kvs[k] = node.kvs[k - 1];
@@ -429,6 +432,24 @@ public:
         file.update(node, pos);
     }
     int AddNode(Node &p) { return file.write(p); }
+
+    vector<TValue> Allvalues() {
+        vector<TValue> ans;
+        int pos = rootpos;
+        Node node = ReadNode(pos);
+        while (!node.isleaf) {
+            pos = node.children[0];
+            node = ReadNode(pos);
+        }
+        while (pos >= 0) {
+            node = ReadNode(pos);
+            for (int i = 0; i < node.keycount; i++) {
+                ans.push_back(node.kvs[i].second);
+            }
+            pos = node.next;
+        }
+        return ans;
+    }
 
     // void printTree() {
     //     bool used[100000];

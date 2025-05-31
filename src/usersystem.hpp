@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #ifndef USERSYSTEM_HPP
 #define USERSYSTEM_HPP
 
@@ -15,7 +16,7 @@ struct User {
     string10 name;
     string30 mailaddr;
     int privilege;
-    bool loggined;
+    bool loggined = 0;
 
     bool operator < (const User &other) {
         return username < other.username;
@@ -47,13 +48,23 @@ public:
         if (users_.Find(user.username).size()) {
             return false;
         }
+        // std::cerr << "adduser: " << user.username << "\n";
         users_.Insert(user.username, user);
         return 1;
     }
     void Login(User user) {
+        // std::cerr << "testlogin0: " << users_.Find(user.username).size() << "\n";
         users_.Remove(user.username, user);
+        // std::cerr << "testlogin0: " << users_.Find(user.username).size() << "\n";
         user.loggined = 1;
         users_.Insert(user.username, user);
+        // std::cerr << "testlogin1: " << user.username << " " << users_.Find(user.username).size() << "\n";
+        // auto p = users_.Allvalues();
+        // std::cerr << "allnode\n";
+        // for (auto x : p) {
+        //     std::cerr << x.username << " ";
+        // }
+        // std::cerr << "\n";
         loggined_.Insert(1, user.username);
     }
     void Logout(User user) {
