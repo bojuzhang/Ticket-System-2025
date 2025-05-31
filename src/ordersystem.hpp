@@ -3,7 +3,6 @@
 #define ORDERSYSTEM_HPP
 
 #include "bpt.hpp"
-#include "mystl.hpp"
 #include "trainsystem.hpp"
 
 enum class OrderStatus {kSUCCESS, kPENDING, kREFUNDED};
@@ -26,6 +25,10 @@ private:
     BPlusTree<string20, Order> trainorder{"trainorder"};
 
 public:
+    void Clear() {
+        userorder.Clear();
+        trainorder.Clear();
+    }
     void AddOrder(const Order &order) {
         userorder.Insert(order.username, order);
         if (order.status == OrderStatus::kPENDING) {

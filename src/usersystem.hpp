@@ -70,6 +70,10 @@ public:
         user.privilege = new_privilege;
         users_.Insert(user.username, user);
     }
+    void Clear() {
+        users_.Clear();
+        loggined_.Clear();
+    }
 };
 
 #endif

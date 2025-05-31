@@ -54,6 +54,14 @@ private:
     BPlusTree<bool, string20> stations{"stations"};
 
 public:
+    void Clear() {
+        trains.Clear();
+        released.Clear();
+        remainseat.Clear();
+        traintime.Clear();
+        traincost.Clear();
+        stations.Clear();
+    }
     bool AddTrain(const Train &train) {
         if (trains.Find(train.trainid).size()) {
             return false;

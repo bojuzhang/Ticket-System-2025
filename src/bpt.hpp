@@ -15,7 +15,7 @@ using sjtu::vector;
 template <class TKey, class TValue>
 class BPlusTree {
 private:
-    static const int kORDER = ((4096 * 2 - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
+    static const int kORDER = ((4096 * 4 - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
     static constexpr int kMAX_KEYS = kORDER - 1;
     static constexpr int kMIN_KEYS = (kORDER + 1) / 2 - 1;
     using kv_type = pair<TKey, TValue>;
@@ -62,6 +62,16 @@ public:
         Node root;
         root = ReadNode(rootpos);
         file.write_info(rootpos, 2);
+    }
+
+    void Clear() {
+        usecnt = 0;
+        for (int i = 0; i < kCACHESIZE; i++) {
+            cache[i].used = 0;
+        }
+        file.clear();
+        Node root;
+        rootpos = AddNode(root);
     }
 
     void Insert(const TKey &key, const TValue &value) {

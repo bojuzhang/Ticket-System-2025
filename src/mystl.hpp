@@ -689,6 +689,13 @@ public:
         file.close();
     }
 
+    void clear() {
+        len_ = 0;
+        for (int i = 1; i <= info_len; i++) {
+            write_info(0, i);
+        }
+    }
+
     void initialise(std::string FN = "", bool clear_file = 0) {
         if (FN != "")
             file_name = FN;

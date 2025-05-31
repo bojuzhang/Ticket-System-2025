@@ -468,10 +468,10 @@ private:
         std::cout << (st ? 0 : -1) << "\n";
     }
     void Clean() {
-
-    }
-    void Exit() {
-
+        usersys.Clear();
+        trainsys.Clear();
+        ordersys.Clear();
+        std::cout << "0\n";
     }
 
 public:
@@ -511,7 +511,8 @@ public:
             } else if (op == "clean") {
                 Clean();
             } else if (op == "exit") {
-                Exit();
+                std::cout << "bye\n";
+                break;
             }
         }
     }
