@@ -16,6 +16,25 @@ struct User {
     string30 mailaddr;
     int privilege;
     bool loggined;
+
+    bool operator < (const User &other) {
+        return username < other.username;
+    }
+    bool operator > (const User &other) {
+        return username > other.username;
+    }
+    bool operator == (const User &other) {
+        return username == other.username;
+    }
+    bool operator <= (const User &other) {
+        return !((*this) > other);
+    }
+    bool operator >= (const User &other) {
+        return !((*this) < other);
+    }
+    bool operator != (const User &other) {
+        return !((*this) == other);
+    }
 };
 
 class UserSystem {

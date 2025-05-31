@@ -17,6 +17,21 @@ struct Order {
     bool operator < (const Order &other) {
         return time < other.time;
     }
+    bool operator > (const Order &other) {
+        return time > other.time;
+    }
+    bool operator == (const Order &other) {
+        return time == other.time;
+    }
+    bool operator <= (const Order &other) {
+        return !((*this) > other);
+    }
+    bool operator >= (const Order &other) {
+        return !((*this) < other);
+    }
+    bool operator != (const Order &other) {
+        return !((*this) == other);
+    }
 };
 
 class OrderSystem {

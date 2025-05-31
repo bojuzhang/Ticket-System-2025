@@ -19,6 +19,24 @@ struct Train {
     MyArray<int, 100> stopovertimes;
     pair<pair<int, int>, pair<int, int>> saledates; // (begin, end); (mm, dd);
     char type;
+    bool operator < (const Train &other) {
+        return trainid < other.trainid;
+    }
+    bool operator > (const Train &other) {
+        return trainid > other.trainid;
+    }
+    bool operator == (const Train &other) {
+        return trainid == other.trainid;
+    }
+    bool operator <= (const Train &other) {
+        return !((*this) > other);
+    }
+    bool operator >= (const Train &other) {
+        return !((*this) < other);
+    }
+    bool operator != (const Train &other) {
+        return !((*this) == other);
+    }
 };
 
 class TrainSystem {
@@ -28,6 +46,24 @@ private:
     struct RemainSeat {
         int stationnum;
         MyArray<int, 100> seats;
+        bool operator < (const RemainSeat &other) {
+            return stationnum < other.stationnum;
+        }
+        bool operator > (const RemainSeat &other) {
+            return stationnum > other.stationnum;
+        }
+        bool operator == (const RemainSeat &other) {
+            return stationnum == other.stationnum;
+        }
+        bool operator <= (const RemainSeat &other) {
+            return !((*this) > other);
+        }
+        bool operator >= (const RemainSeat &other) {
+            return !((*this) < other);
+        }
+        bool operator != (const RemainSeat &other) {
+            return !((*this) == other);
+        }
     };
     using TrainInDay = pair<pair<int, int>, string20>; // date, id
     BPlusTree<TrainInDay, RemainSeat> remainseat{"remainseat"};
@@ -43,10 +79,40 @@ private:
         bool operator < (const TrainTime &other) {
             return (time != other.time) ? time < other.time : trainid < other.trainid;
         }
+        bool operator > (const TrainTime &other) {
+            return (time != other.time) ? time > other.time : trainid > other.trainid;
+        }
+        bool operator == (const TrainTime &other) {
+            return trainid == other.trainid;
+        }
+        bool operator <= (const TrainTime &other) {
+            return !((*this) > other);
+        }
+        bool operator >= (const TrainTime &other) {
+            return !((*this) < other);
+        }
+        bool operator != (const TrainTime &other) {
+            return !((*this) == other);
+        }
     };
     struct TrainCost : TrainTicket {
         bool operator < (const TrainCost &other) {
             return (cost != other.cost) ? cost < other.cost : trainid < other.trainid;
+        }
+        bool operator > (const TrainCost &other) {
+            return (cost != other.cost) ? cost > other.cost : trainid > other.trainid;
+        }
+        bool operator == (const TrainCost &other) {
+            return trainid == other.trainid;
+        }
+        bool operator <= (const TrainCost &other) {
+            return !((*this) > other);
+        }
+        bool operator >= (const TrainCost &other) {
+            return !((*this) < other);
+        }
+        bool operator != (const TrainCost &other) {
+            return !((*this) == other);
         }
     };
     BPlusTree<pair<string20, string20>, TrainTime> traintime{"traintime"};
@@ -100,7 +166,7 @@ public:
             int de = m == train.saledates.second.first ? train.saledates.second.second : 
                         (m == 6 ? 30 : 31);
             for (int d = db; d <= de; d++) {
-                remainseat.Insert(pair{m, d}, t);
+                remainseat.Insert({pair{m, d}, trainid}, t);
             }
         }
         int sminutes = train.starttime.first * 60 + train.starttime.second;
