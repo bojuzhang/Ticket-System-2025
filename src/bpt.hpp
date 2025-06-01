@@ -36,7 +36,7 @@ private:
     MemoryRiver<Node> file;
     int rootpos;
 
-    static constexpr int kCACHESIZE = 32;
+    static constexpr int kCACHESIZE = 16;
     struct Cache {
         bool used;
         int pos;
