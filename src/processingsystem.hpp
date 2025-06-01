@@ -322,7 +322,7 @@ private:
             std::cout << p.from << " ";
             std::cout << ToString2(p.leaving[0]) << "-" << ToString2(p.leaving[1]) << " ";
             std::cout << ToString2(p.leaving[2]) << ":" << ToString2(p.leaving[3]) << " -> ";
-            std::cout << p.to;
+            std::cout << p.to << " ";
             std::cout << ToString2(p.arriving[0]) << "-" << ToString2(p.arriving[1]) << " ";
             std::cout << ToString2(p.arriving[2]) << ":" << ToString2(p.arriving[3]) << " ";
             std::cout << p.price << " " << p.seat << "\n";
@@ -396,13 +396,19 @@ private:
             std::cout << -1 << "\n";
             return;
         }
-        auto [orderinfo, costs] = trainsys.BuyTickets(trainid, date, from, to, n);
+        auto [orderinfo, hasticket] = trainsys.BuyTickets(trainid, date, from, to, n);
         Order order;
         order.orderinfo = orderinfo;
         order.time = timestamp;
         order.username = username;
         order.trainid = trainid;
         order.from = from, order.to = to;
+        order.num = n;
+        int costs = orderinfo.price * n;
+        if (!hasticket) {
+            std::cout << -1 << "\n";
+            return;
+        }
         if (costs > 0) {
             order.status = OrderStatus::kSUCCESS;
             ordersys.AddOrder(order);
@@ -427,8 +433,9 @@ private:
         }
         auto ans = ordersys.QueryOrder(username);
         std::cout << ans.size() << "\n";
-        for (auto p : ans) {
-            std::cout << "[" << (p.status == OrderStatus::kPENDING ? "pending\n" : (p.status == OrderStatus::kSUCCESS ? "success\n" : "refunded\n")) << "] ";
+        for (int i = static_cast<int>(ans.size()) - 1; i >= 0; i--) {
+            auto p = ans[i];
+            std::cout << "[" << (p.status == OrderStatus::kPENDING ? "pending" : (p.status == OrderStatus::kSUCCESS ? "success" : "refunded")) << "] ";
             std::cout << p.trainid << " " << p.from << " ";
             std::cout << ToString2(p.orderinfo.leaving[0]) << "-" << ToString2(p.orderinfo.leaving[1]) << " ";
             std::cout << ToString2(p.orderinfo.leaving[2]) << ":" << ToString2(p.orderinfo.leaving[3]) << " -> ";
@@ -487,6 +494,7 @@ public:
         std::string times, op;
         while (std::cin >> times >> op) {
             int timestamp = std::stoi(times.substr(1, times.size() - 2));
+            // if (timestamp == 6799) trainsys.Debug = 1;
             std::cout << times << " ";
             if (op == "add_user") {
                 AddUser();
@@ -522,6 +530,7 @@ public:
                 std::cout << "bye\n";
                 break;
             }
+            // trainsys.Debug = 0;
         }
     }
 };

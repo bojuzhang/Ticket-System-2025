@@ -13,10 +13,10 @@ using sjtu::MemoryRiver;
 using sjtu::pair;
 using sjtu::vector;
 
-template <class TKey, class TValue>
+template <class TKey, class TValue, int kPLUS = 8>
 class BPlusTree {
 private:
-    static const int kORDER = ((4096 * 8 - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
+    static const int kORDER = ((4096 * kPLUS - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
     static constexpr int kMAX_KEYS = kORDER - 1;
     static constexpr int kMIN_KEYS = (kORDER + 1) / 2 - 1;
     using kv_type = pair<TKey, TValue>;
