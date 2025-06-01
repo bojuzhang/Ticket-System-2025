@@ -485,9 +485,9 @@ private:
             //     std::cerr << "fdfghs: " << res.size() << "\n";
             // }
             for (auto q : res) {
-                auto [orderinfo, costs] = trainsys.BuyTickets(q.trainid, {q.orderinfo.leaving[0], q.orderinfo.leaving[1]}, q.from, q.to, q.num);
+                auto [orderinfo, hasticket] = trainsys.BuyTickets(q.trainid, {q.orderinfo.leaving[0], q.orderinfo.leaving[1]}, q.from, q.to, q.num);
                 assert(q.num > 0);
-                if (costs > 0) {
+                if (hasticket == 2) {
                     ordersys.DelOrder(q);
                     q.status = OrderStatus::kSUCCESS;
                     ordersys.AddOrder(q);
