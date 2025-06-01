@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #ifndef PROCESSINGSYSTEM_HPP
 #define PROCESSINGSYSTEM_HPP
 
@@ -409,11 +410,11 @@ private:
             std::cout << -1 << "\n";
             return;
         }
-        if (costs > 0) {
+        if (hasticket == 2) {
             order.status = OrderStatus::kSUCCESS;
             ordersys.AddOrder(order);
             std::cout << costs << "\n";
-        } else if (costs == 0) {
+        } else if (hasticket == 1) {
             if (q) {
                 order.status = OrderStatus::kPENDING;
                 ordersys.AddOrder(order);
@@ -466,12 +467,26 @@ private:
             std::cout << -1 << "\n";
             return;
         }
-        auto order = p[n - 1];
+        auto order = p[static_cast<int>(p.size()) - n];
         if (order.status == OrderStatus::kSUCCESS) {
-            trainsys.BuyTickets(order.trainid, {order.orderinfo.arriving[0], order.orderinfo.arriving[1]}, order.from, order.to, -order.num);
+        //     if (order.trainid == std::string("LeavesofGrass")) {
+        //         std::cerr << "[" << (order.status == OrderStatus::kPENDING ? "pending" : (order.status == OrderStatus::kSUCCESS ? "success" : "refunded")) << "] ";
+        //         std::cerr << order.trainid << " " << order.from << " ";
+        //         std::cerr << ToString2(order.orderinfo.leaving[0]) << "-" << ToString2(order.orderinfo.leaving[1]) << " ";
+        //         std::cerr << ToString2(order.orderinfo.leaving[2]) << ":" << ToString2(order.orderinfo.leaving[3]) << " -> ";
+        //         std::cerr << order.to << " ";
+        //         std::cerr << ToString2(order.orderinfo.arriving[0]) << "-" << ToString2(order.orderinfo.arriving[1]) << " ";
+        //         std::cerr << ToString2(order.orderinfo.arriving[2]) << ":" << ToString2(order.orderinfo.arriving[3]) << " ";
+        //         std::cerr << order.orderinfo.price << " " << order.num << "\n";
+        //     }
+            trainsys.BuyTickets(order.trainid, {order.orderinfo.leaving[0], order.orderinfo.leaving[1]}, order.from, order.to, -order.num);
             auto res = ordersys.GetRefund(order.trainid);
+            // if (order.trainid == std::string("LeavesofGrass")) {
+            //     std::cerr << "fdfghs: " << res.size() << "\n";
+            // }
             for (auto q : res) {
-                auto [orderinfo, costs] = trainsys.BuyTickets(q.trainid, {q.orderinfo.arriving[0], q.orderinfo.arriving[1]}, q.from, q.to, q.num);
+                auto [orderinfo, costs] = trainsys.BuyTickets(q.trainid, {q.orderinfo.leaving[0], q.orderinfo.leaving[1]}, q.from, q.to, q.num);
+                assert(q.num > 0);
                 if (costs > 0) {
                     ordersys.DelOrder(q);
                     q.status = OrderStatus::kSUCCESS;

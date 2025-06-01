@@ -68,7 +68,7 @@ private:
         }
     };
     using TrainInDay = pair<pair<int, int>, string20>; // date, id
-    BPlusTree<TrainInDay, RemainSeat, 32> remainseat{"remainseat"};
+    BPlusTree<TrainInDay, RemainSeat, 64> remainseat{"remainseat"};
     struct TrainTicket {
         string20 trainid;
         int addday;
@@ -360,7 +360,8 @@ public:
         MyArray<int, 4> leaving, arriving;
         int price = 0;
     };
-    pair<OrderInfo, bool> BuyTickets(const string20 &trainid, pair<int, int> date, const string30 &st, const string30 &ed, int n) {
+    // 0: no train; 1: no tickets; 2: normal
+    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string30 &st, const string30 &ed, int n) {
         auto p = trains.Find(trainid);
         if (!p.size()) {
             return {OrderInfo(), 0};
@@ -454,6 +455,18 @@ public:
         if (!q.size()) {
             return {OrderInfo(), 0};
         }
+        flag = 0;
+        for (int i = 0; i < train.stationnum; i++) {
+            if (train.stations[i] == st) {
+                flag = 1;
+            }
+            if (train.stations[i] == ed) {
+                flag = 0;
+            }
+            if (flag) {
+                order.price += train.prices[i];
+            }
+        }
         auto seats = q[0];
         flag = 0;
         for (int i = 0; i < train.stationnum; i++) {
@@ -470,6 +483,19 @@ public:
             }
         }
         remainseat.Remove(pair{date, trainid}, seats);
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        //     std::cerr << "test buy: " << date.first << " " << date.second << " " << n << "\n";
+        //     if (n < 0) {
+        //         std::cerr << "test: " << st << " " << ed << " " << adddays << "\n";
+        //     }
+        // }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        //     std::cerr << "before:\n";
+        //     for (int i = 0; i < train.stationnum; i++) {
+        //         std::cerr << seats.seats[i] << " ";
+        //     }
+        //     std::cerr << "\n";
+        // }
         flag = 0;
         for (int i = 0; i < train.stationnum; i++) {
             if (train.stations[i] == st) {
@@ -480,11 +506,21 @@ public:
             }
             if (flag) {
                 seats.seats[i] -= n;
-                order.price += train.prices[i];
             }
         }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        //     std::cerr << "after\n";
+        //     for (int i = 0; i < train.stationnum; i++) {
+        //         std::cerr << seats.seats[i] << " ";
+        //     }
+        //     std::cerr << "\n";
+        // }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        //     std::cerr << "dfshgfhsdgfhds: " << remainseat.Find({date, trainid}).size() << "\n";
+        // }
         remainseat.Insert(pair{date, trainid}, seats);
-        return {order, 1};
+        
+        return {order, 2};
     }
     struct TransferTicket {
         TicketInfo first;
