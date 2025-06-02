@@ -143,8 +143,8 @@ private:
             return ticket.time != other.ticket.time;
         }
     };
-    BPlusTree<string30, TransferInfo, 8, 8> stations{"stations"};
-    BPlusTree<pair<string30, string30>, TransferInfo, 8, 8> transnext{"transnext"};
+    BPlusTree<string30, TransferInfo, 8, 4> stations{"stations"};
+    BPlusTree<pair<string30, string30>, TransferInfo, 8, 4> transnext{"transnext"};
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
         date.second += x;
