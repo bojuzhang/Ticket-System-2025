@@ -44,7 +44,7 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<string20, Train, 128, 16> trains{"trains"};
+    BPlusTree<string20, Train, 128, 8> trains{"trains"};
     BPlusTree<string20, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
@@ -118,8 +118,8 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<string30, string30>, TrainTime> traintime{"traintime"};
-    BPlusTree<pair<string30, string30>, TrainCost> traincost{"traincost"};
+    BPlusTree<pair<string30, string30>, TrainTime, 8, 8> traintime{"traintime"};
+    BPlusTree<pair<string30, string30>, TrainCost, 8, 8> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
         string30 to;
