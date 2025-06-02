@@ -262,7 +262,7 @@ public:
         int prices = 0;
         for (int i = 0; i + 2 < train.stationnum; i++) {
             minutes += train.traveltimes[i];
-            if (minutes > 1440) {
+            if (minutes >= 1440) {
                 minutes -= 1440;
                 d++;
             }
@@ -272,7 +272,7 @@ public:
             }
             arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
             minutes += train.stopovertimes[i];
-            if (minutes > 1440) {
+            if (minutes >= 1440) {
                 minutes -= 1440;
                 d++;
             }
@@ -285,7 +285,7 @@ public:
             ans.push_back({train.stations[i + 1], arr, lea, prices, train.seatnum});
         }
         minutes += train.traveltimes[train.stationnum - 2];
-        if (minutes > 1440) {
+        if (minutes >= 1440) {
             minutes -= 1440;
             d++;
         }
@@ -401,7 +401,7 @@ public:
         }
         for (int i = 0; i + 2 < train.stationnum; i++) {
             minutes += train.traveltimes[i];
-            if (minutes > 1440) {
+            if (minutes >= 1440) {
                 minutes -= 1440;
                 d++;
                 if (!flag) {
@@ -414,7 +414,7 @@ public:
             }
             arr[0] = m, arr[1] = d, arr[2] = minutes / 60, arr[3] = minutes % 60;
             minutes += train.stopovertimes[i];
-            if (minutes > 1440) {
+            if (minutes >= 1440) {
                 minutes -= 1440;
                 d++;
                 if (!flag) {
@@ -436,7 +436,7 @@ public:
             }
         }
         minutes += train.traveltimes[train.stationnum - 2];
-        if (minutes > 1440) {
+        if (minutes >= 1440) {
             minutes -= 1440;
             d++;
             if (!flag) {
