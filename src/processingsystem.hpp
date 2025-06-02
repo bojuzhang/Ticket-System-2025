@@ -506,7 +506,7 @@ public:
         std::string times, op;
         while (std::cin >> times >> op) {
             int timestamp = std::stoi(times.substr(1, times.size() - 2));
-            // if (timestamp == 6799) trainsys.Debug = 1;
+            // if (timestamp == 69053) trainsys.Debug = 1;
             std::cout << times << " ";
             if (op == "add_user") {
                 AddUser();
@@ -542,7 +542,7 @@ public:
                 std::cout << "bye\n";
                 break;
             }
-            // trainsys.Debug = 0;
+            trainsys.Debug = 0;
         }
     }
 };

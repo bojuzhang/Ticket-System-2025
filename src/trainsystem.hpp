@@ -393,9 +393,11 @@ public:
         arr[0] = arr[1] = arr[2] = arr[3] = -1;
         lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
         int minutes = lea[2] * 60 + lea[3];
+        bool has_st = 0, has_ed = 0;
         if (train.stations[0] == st) {
             order.leaving = lea;
             flag = 1;
+            has_st = 1;
         }
         for (int i = 0; i + 2 < train.stationnum; i++) {
             minutes += train.traveltimes[i];
@@ -427,8 +429,10 @@ public:
             if (train.stations[i + 1] == st) {
                 order.leaving = lea;
                 flag = 1;
+                has_st = 1;
             } else if (train.stations[i + 1] == ed) {
                 order.arriving = arr;
+                has_ed = 1;
             }
         }
         minutes += train.traveltimes[train.stationnum - 2];
@@ -447,6 +451,10 @@ public:
         lea[0] = lea[1] = lea[2] = lea[3] = -1;
         if (train.stations[train.stationnum - 1] == ed) {
             order.arriving = arr;
+            has_ed = 1;
+        }
+        if (!has_st || !has_ed) {
+            return {OrderInfo(), 0};
         }
         if (Debug) {
             std::cerr << "date: " << date.first << " " << date.second << " " << adddays << "\n";
