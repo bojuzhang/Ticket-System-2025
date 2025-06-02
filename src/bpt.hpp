@@ -13,7 +13,7 @@ using sjtu::MemoryRiver;
 using sjtu::pair;
 using sjtu::vector;
 
-template <class TKey, class TValue, int kPLUS = 8>
+template <class TKey, class TValue, int kPLUS = 8, int kCACHESIZE = 32>
 class BPlusTree {
 private:
     static const int kORDER = ((4096 * kPLUS - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
@@ -36,7 +36,6 @@ private:
     MemoryRiver<Node> file;
     int rootpos;
 
-    static constexpr int kCACHESIZE = 16;
     struct Cache {
         bool used;
         int pos;
