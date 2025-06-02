@@ -43,7 +43,7 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<string20, Train, 64> trains{"trains"};
+    BPlusTree<string20, Train, 128> trains{"trains"};
     BPlusTree<string20, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
@@ -68,7 +68,7 @@ private:
         }
     };
     using TrainInDay = pair<pair<int, int>, string20>; // date, id
-    BPlusTree<TrainInDay, RemainSeat, 64> remainseat{"remainseat"};
+    BPlusTree<TrainInDay, RemainSeat, 128> remainseat{"remainseat"};
     struct TrainTicket {
         string20 trainid;
         int addday;

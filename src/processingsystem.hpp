@@ -15,8 +15,6 @@ private:
     TrainSystem trainsys;
     OrderSystem ordersys;
 
-    bool has_user;
-
     vector<std::string> GetToken() {
         vector<std::string> v;
         std::string s, t;
@@ -68,10 +66,9 @@ private:
                 new_user.privilege = std::stoi(s[i + 1]);
             }
         }
-        if (!has_user) {
+        if (usersys.Empty()) {
             new_user.privilege = 10;
             usersys.AddUser(new_user);
-            has_user = 1;
             std::cout << 0 << "\n";
             return;
         }

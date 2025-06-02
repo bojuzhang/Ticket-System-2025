@@ -44,6 +44,17 @@ private:
     BPlusTree<bool, string20> loggined_{"loggined"};
 
 public:
+    ~UserSystem() {
+        auto logins = loggined_.Find(1);
+        for (auto p : logins) {
+            Logout(QueryUser(p).first);
+        }
+    }
+
+    bool Empty() {
+        return users_.Empty();
+    }
+
     bool AddUser(const User &user) {
         if (users_.Find(user.username).size()) {
             return false;

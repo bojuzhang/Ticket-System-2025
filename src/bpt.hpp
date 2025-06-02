@@ -76,6 +76,11 @@ public:
         rootpos = AddNode(root);
     }
 
+    bool Empty() {
+        Node root = ReadNode(rootpos);
+        return root.isleaf && root.keycount == 0;
+    }
+
     void Insert(const TKey &key, const TValue &value) {
         Node root = ReadNode(rootpos);
         if (root.isleaf && root.keycount == 0) {
