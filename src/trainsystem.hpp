@@ -118,8 +118,8 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<string30, string30>, TrainTime, 8, 16> traintime{"traintime"};
-    BPlusTree<pair<string30, string30>, TrainCost, 8, 16> traincost{"traincost"};
+    BPlusTree<pair<string30, string30>, TrainTime> traintime{"traintime"};
+    BPlusTree<pair<string30, string30>, TrainCost> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
         string30 to;
@@ -143,8 +143,8 @@ private:
             return ticket.time != other.ticket.time;
         }
     };
-    BPlusTree<string30, TransferInfo, 8> stations{"stations"};
-    BPlusTree<pair<string30, string30>, TransferInfo, 8> transnext{"transnext"};
+    BPlusTree<string30, TransferInfo, 8, 8> stations{"stations"};
+    BPlusTree<pair<string30, string30>, TransferInfo, 8, 8> transnext{"transnext"};
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
         date.second += x;
