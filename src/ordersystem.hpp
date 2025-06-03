@@ -36,8 +36,8 @@ struct Order {
 
 class OrderSystem {
 private:
-    BPlusTree<ull, Order, 2> userorder{"userorder"};
-    BPlusTree<ull, Order, 2> trainorder{"trainorder"};
+    BPlusTree<ull, Order, 4, 8> userorder{"userorder"};
+    BPlusTree<ull, Order, 4, 8> trainorder{"trainorder"};
 
 public:
     void Clear() {

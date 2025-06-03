@@ -102,15 +102,14 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<ull, ull>, TrainTime, 2, 8> traintime{"traintime"};
-    BPlusTree<pair<ull, ull>, TrainCost, 2, 8> traincost{"traincost"};
+    BPlusTree<pair<ull, ull>, TrainTime, 4, 8> traintime{"traintime"};
+    BPlusTree<pair<ull, ull>, TrainCost, 4, 8> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
-        string30 to;
         pair<pair<int, int>, pair<int, int>> saledates;
     };
     MemoryRiver<TransferInfo> transidx;
-    BPlusTree<ull, int> stations{"stations"};
+    BPlusTree<ull, string30> stations{"stations"};
     BPlusTree<pair<ull, ull>, int> transnext{"transnext"};
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
@@ -208,10 +207,9 @@ public:
                 cost += train.prices[j];
                 TransferInfo trans;
                 trans.ticket = ticket;
-                trans.to = train.stations[j];
                 trans.saledates = train.saledates;
                 int transpos = transidx.write(trans);
-                stations.Insert(hash(train.stations[i]), transpos);
+                stations.Insert(hash(train.stations[i]), train.stations[j]);
                 transnext.Insert({hash(train.stations[i]), hash(train.stations[j])}, transpos);
             }
             sminutes += train.traveltimes[i];
@@ -574,70 +572,72 @@ public:
         TransferTicket ans;
         bool has_ans = 0;
         auto transsstaions = stations.Find(hash(st));
-        for (auto pos1 : transsstaions) {
-            TransferInfo p1;
-            transidx.read(p1, pos1);
-            auto &trans = p1.to;
-            auto [t1, has1] = GetTicketInfo(p1.ticket, date.first, date.second, st, trans);
-            if (!has1) {
-                continue;
-            }
-            auto q = transnext.Find({hash(trans), hash(ed)});
-            if (!q.size()) {
-                continue;
-            }
-            // auto ToString2 = [&](int x) -> std::string {
-            //     if (x == -1) {
-            //         return "xx";
-            //     }
-            //     std::string s = std::to_string(x);
-            //     if (x < 10) {
-            //         s = "0" + s;
-            //     }
-            //     return s;
-            // };
-            // if (Debug) {
-            //     std::cerr << t1.trainid << " ";
-            //     std::cerr << t1.from << " ";
-            //     std::cerr << ToString2(t1.leaving[0]) << "-" << ToString2(t1.leaving[1]) << " ";
-            //     std::cerr << ToString2(t1.leaving[2]) << ":" << ToString2(t1.leaving[3]) << " -> ";
-            //     std::cerr << t1.to << " ";
-            //     std::cerr << ToString2(t1.arriving[0]) << "-" << ToString2(t1.arriving[1]) << " ";
-            //     std::cerr << ToString2(t1.arriving[2]) << ":" << ToString2(t1.arriving[3]) << " ";
-            //     std::cerr << t1.price << " " << t1.seat << "\n";
-            // }
-            // std::cerr << "test " << st << " " << trans << "\n";
-            pair<int, int> todate = {t1.arriving[0], t1.arriving[1]};
-            for (auto pos2 : q) {
-                TransferInfo p2;
-                transidx.read(p2, pos2);
-                if (p2.ticket.trainid == t1.trainid) {
+        for (auto trans : transsstaions) {
+            auto ve = transnext.Find({hash(st), hash(trans)});
+            for (int pos1 : ve) {
+                TransferInfo p1;
+                transidx.read(p1, pos1);
+                auto [t1, has1] = GetTicketInfo(p1.ticket, date.first, date.second, st, trans);
+                if (!has1) {
                     continue;
                 }
-                pair<int, int> realdatel = p2.saledates.first, realdater = p2.saledates.second;
-                realdatel = AddDay(realdatel, p2.ticket.addday);
-                realdater = AddDay(realdater, p2.ticket.addday);
-                // std::cerr << realdatel.first << " " << realdatel.second << "\n";
-                // std::cerr << realdater.first << " " << realdater.second << "\n";
-                if (todate > realdater) {
+                auto q = transnext.Find({hash(trans), hash(ed)});
+                if (!q.size()) {
                     continue;
                 }
-                pair<int, int> transferdate;
-                if (todate < realdatel) {
-                    transferdate = realdatel;
-                } else if (pair{t1.arriving[2], t1.arriving[3]} > pair{p2.ticket.leaving[0], p2.ticket.leaving[1]}) {
-                    transferdate = AddDay(todate, 1);
-                } else {
-                    transferdate = todate;
-                }
-                auto [t2, has2] = GetTicketInfo(p2.ticket, transferdate.first, transferdate.second, trans, ed);
-                if (!has2) {
-                    continue;
-                }
-                TransferTicket res = {t1, t2, get_delta(t1.arriving, t2.leaving)};
-                if (!has_ans || (ord == TicketOrder::kTIME && TransferTime(res, ans)) || (ord == TicketOrder::kCOST && TransferCost(res, ans))) {
-                    has_ans = 1;
-                    ans = res;
+                // auto ToString2 = [&](int x) -> std::string {
+                //     if (x == -1) {
+                //         return "xx";
+                //     }
+                //     std::string s = std::to_string(x);
+                //     if (x < 10) {
+                //         s = "0" + s;
+                //     }
+                //     return s;
+                // };
+                // if (Debug) {
+                //     std::cerr << t1.trainid << " ";
+                //     std::cerr << t1.from << " ";
+                //     std::cerr << ToString2(t1.leaving[0]) << "-" << ToString2(t1.leaving[1]) << " ";
+                //     std::cerr << ToString2(t1.leaving[2]) << ":" << ToString2(t1.leaving[3]) << " -> ";
+                //     std::cerr << t1.to << " ";
+                //     std::cerr << ToString2(t1.arriving[0]) << "-" << ToString2(t1.arriving[1]) << " ";
+                //     std::cerr << ToString2(t1.arriving[2]) << ":" << ToString2(t1.arriving[3]) << " ";
+                //     std::cerr << t1.price << " " << t1.seat << "\n";
+                // }
+                // std::cerr << "test " << st << " " << trans << "\n";
+                pair<int, int> todate = {t1.arriving[0], t1.arriving[1]};
+                for (auto pos2 : q) {
+                    TransferInfo p2;
+                    transidx.read(p2, pos2);
+                    if (p2.ticket.trainid == t1.trainid) {
+                        continue;
+                    }
+                    pair<int, int> realdatel = p2.saledates.first, realdater = p2.saledates.second;
+                    realdatel = AddDay(realdatel, p2.ticket.addday);
+                    realdater = AddDay(realdater, p2.ticket.addday);
+                    // std::cerr << realdatel.first << " " << realdatel.second << "\n";
+                    // std::cerr << realdater.first << " " << realdater.second << "\n";
+                    if (todate > realdater) {
+                        continue;
+                    }
+                    pair<int, int> transferdate;
+                    if (todate < realdatel) {
+                        transferdate = realdatel;
+                    } else if (pair{t1.arriving[2], t1.arriving[3]} > pair{p2.ticket.leaving[0], p2.ticket.leaving[1]}) {
+                        transferdate = AddDay(todate, 1);
+                    } else {
+                        transferdate = todate;
+                    }
+                    auto [t2, has2] = GetTicketInfo(p2.ticket, transferdate.first, transferdate.second, trans, ed);
+                    if (!has2) {
+                        continue;
+                    }
+                    TransferTicket res = {t1, t2, get_delta(t1.arriving, t2.leaving)};
+                    if (!has_ans || (ord == TicketOrder::kTIME && TransferTime(res, ans)) || (ord == TicketOrder::kCOST && TransferCost(res, ans))) {
+                        has_ans = 1;
+                        ans = res;
+                    }
                 }
             }
         }
