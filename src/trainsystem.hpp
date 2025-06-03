@@ -1,11 +1,9 @@
 #pragma once
-#include <cassert>
-#include <climits>
-#include <iostream>
-#include <string>
 #ifndef TRAINSYSTEM_HPP
 #define TRAINSYSTEM_HPP
 
+#include <climits>
+#include <string>
 #include "bpt.hpp"
 #include "mystl.hpp"
 #include "usersystem.hpp"
@@ -122,8 +120,6 @@ private:
     };
 
 public:
-    bool Debug = 0;
-
     TrainSystem() {
         trains.initialise("trains", 1);
         remainseat.initialise("remainseat", 1);
@@ -183,10 +179,8 @@ public:
             int db = m == train.saledates.first.first ? train.saledates.first.second : 1;
             int de = m == train.saledates.second.first ? train.saledates.second.second : 
                         (m == 6 ? 30 : 31);
-            // std::cerr << "test " << m << " " << db << " " << de << "\n";
             for (int d = db; d <= de; d++) {        
                 int idx = remainseat.write(t);
-                // std::cerr << idx << " " << train.trainid << "\n";
                 remainseatidx.Insert({pair{m, d}, hash(trainid)}, idx);
             }
         }
@@ -321,24 +315,15 @@ public:
             ad += (m == 7 ? 30 : 31);
             am--;
         }
-        // if (Debug) {
-        //     std::cerr << "time: " << am << " " << ad << "\n";
-        // }
         auto seatidxs = remainseatidx.Find(pair{pair{am, ad}, hash(t.trainid)});
         if (!seatidxs.size()) {
             return {TicketInfo(), 0};
         } 
         RemainSeat seat;
         remainseat.read(seat, seatidxs[0]);
-        // if (Debug) {
-        //     std::cerr << seatidxs[0] << "\n";
-        // }
         t.seat = train.seatnum;
         bool flag = 0;
         for (int k = 0; k < seat.stationnum; k++) {
-            // if (Debug) {
-            //     std::cerr << k << " " << seat.seats[k] << "\n";
-            // }
             if (st == train.stations[k]) {
                 flag = 1;
             }
@@ -472,9 +457,6 @@ public:
         if (!has_st || !has_ed) {
             return {OrderInfo(), 0};
         }
-        if (Debug) {
-            std::cerr << "date: " << date.first << " " << date.second << " " << adddays << "\n";
-        }
         order.arriving[1] -= adddays;
         if (order.arriving[1] <= 0) {
             order.arriving[1] += (order.arriving[0] == 7 ? 30 : 31);
@@ -489,9 +471,6 @@ public:
         if (date.second <= 0) {
             date.second += (date.first == 7 ? 30 : 31);
             date.first--;
-        }
-        if (Debug) {
-            std::cerr << "date: " << date.first << " " << date.second << " " << adddays << "\n";
         }
         auto q = remainseatidx.Find(pair{date, hash(trainid)});
         if (!q.size()) {
@@ -578,23 +557,14 @@ public:
         auto transstations = stations.Find(hash(st));
         for (auto trans : transstations) {
             auto ve = transnext.Find({hash(st), hash(trans)});
-            // if (Debug) {
-            //     std::cerr << trans << "\n";
-            // }
             for (auto ti1 : ve) {
                 int pos1 = ti1.ticketidx;
                 TrainTicket p1;
                 ticketidx.read(p1, pos1);
-                // if (Debug) {
-                //     std::cerr << "test " << pos1 << " " << p1.trainid << " " << trans << "\n";
-                // }
                 auto [t1, has1] = GetTicketInfo(p1, date.first, date.second, st, trans);
                 if (!has1) {
                     continue;
                 }
-                // if (Debug) {
-                //     std::cerr << "fhdj has1\n";
-                // }
                 auto q = transnext.Find({hash(trans), hash(ed)});
                 if (!q.size()) {
                     continue;
@@ -610,8 +580,6 @@ public:
                     pair<short, short> realdatel = ti2.saledates.first, realdater = ti2.saledates.second;
                     realdatel = AddDay(realdatel, p2.addday);
                     realdater = AddDay(realdater, p2.addday);
-                    // std::cerr << realdatel.first << " " << realdatel.second << "\n";
-                    // std::cerr << realdater.first << " " << realdater.second << "\n";
                     if (todate > realdater) {
                         continue;
                     }

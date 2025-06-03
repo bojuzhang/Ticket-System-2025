@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #ifndef USERSYSTEM_HPP
 #define USERSYSTEM_HPP
 
