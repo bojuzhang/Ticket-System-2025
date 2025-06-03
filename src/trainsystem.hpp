@@ -108,30 +108,10 @@ private:
         TrainTicket ticket;
         string30 to;
         pair<pair<int, int>, pair<int, int>> saledates;
-        int idx;
-        bool operator < (const TransferInfo &other) {
-            return idx < other.idx;
-        }
-        bool operator > (const TransferInfo &other) {
-            return idx > other.idx;
-        }
-        bool operator == (const TransferInfo &other) {
-            return idx == other.idx;
-        }
-        bool operator <= (const TransferInfo &other) {
-            return idx <= other.idx;
-        }
-        bool operator >= (const TransferInfo &other) {
-            return idx >= other.idx;
-        }
-        bool operator != (const TransferInfo &other) {
-            return idx != other.idx;
-        }
     };
-    BPlusTree<ull, TransferInfo, 4, 16> stations{"stations"};
-    int idxstations;
-    BPlusTree<pair<ull, ull>, TransferInfo, 4, 16> transnext{"transnext"};
-    int idxtransnext;
+    MemoryRiver<TransferInfo> transidx;
+    BPlusTree<ull, int, 2, 8> stations{"stations"};
+    BPlusTree<pair<ull, ull>, int, 2, 8> transnext{"transnext"};
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
         date.second += x;
@@ -146,14 +126,9 @@ public:
     bool Debug = 0;
 
     TrainSystem() {
-        idxstations = stations.GetInfo();
-        idxtransnext = transnext.GetInfo();
         trains.initialise("trains", 1);
         remainseat.initialise("remainseat", 1);
-    }
-    ~TrainSystem() {
-        stations.AddInfo(idxstations);
-        transnext.AddInfo(idxtransnext);
+        transidx.initialise("transidx", 1);
     }
 
     void Clear() {
@@ -166,7 +141,6 @@ public:
         transnext.Clear();
         trainidx.Clear();
         remainseatidx.Clear();
-        idxstations = idxtransnext = 0;
     }
     bool AddTrain(const Train &train) {
         if (trainidx.Find(hash(train.trainid)).size()) {
@@ -236,10 +210,9 @@ public:
                 trans.ticket = ticket;
                 trans.to = train.stations[j];
                 trans.saledates = train.saledates;
-                trans.idx = ++idxstations;
-                stations.Insert(hash(train.stations[i]), trans);
-                trans.idx = ++idxtransnext;
-                transnext.Insert({hash(train.stations[i]), hash(train.stations[j])}, trans);
+                int transpos = transidx.write(trans);
+                stations.Insert(hash(train.stations[i]), transpos);
+                transnext.Insert({hash(train.stations[i]), hash(train.stations[j])}, transpos);
             }
             sminutes += train.traveltimes[i];
             if (i + 1 < train.stationnum) sminutes += train.stopovertimes[i];
@@ -601,7 +574,9 @@ public:
         TransferTicket ans;
         bool has_ans = 0;
         auto transsstaions = stations.Find(hash(st));
-        for (auto p1 : transsstaions) {
+        for (auto pos1 : transsstaions) {
+            TransferInfo p1;
+            transidx.read(p1, pos1);
             auto &trans = p1.to;
             auto [t1, has1] = GetTicketInfo(p1.ticket, date.first, date.second, st, trans);
             if (!has1) {
@@ -633,7 +608,9 @@ public:
             // }
             // std::cerr << "test " << st << " " << trans << "\n";
             pair<int, int> todate = {t1.arriving[0], t1.arriving[1]};
-            for (auto p2 : q) {
+            for (auto pos2 : q) {
+                TransferInfo p2;
+                transidx.read(p2, pos2);
                 if (p2.ticket.trainid == t1.trainid) {
                     continue;
                 }
