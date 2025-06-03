@@ -591,11 +591,11 @@ public:
         return a.second.trainid < b.second.trainid;
     }
     bool TransferCost(const TransferTicket &a, const TransferTicket &b) {
-        if (a.first.ticketinfo.cost + a.second.ticketinfo.cost + a.deltatime != b.first.ticketinfo.cost + b.second.ticketinfo.cost + b.deltatime) {
-            return a.first.ticketinfo.cost + a.second.ticketinfo.cost + a.deltatime < b.first.ticketinfo.cost + b.second.ticketinfo.cost + b.deltatime;
+        if (a.first.ticketinfo.cost + a.second.ticketinfo.cost != b.first.ticketinfo.cost + b.second.ticketinfo.cost) {
+            return a.first.ticketinfo.cost + a.second.ticketinfo.cost < b.first.ticketinfo.cost + b.second.ticketinfo.cost;
         }
-        if (a.first.ticketinfo.time + a.second.ticketinfo.time != b.first.ticketinfo.time + b.second.ticketinfo.time) {
-            return a.first.ticketinfo.time + a.second.ticketinfo.time < b.first.ticketinfo.time + b.second.ticketinfo.time;
+        if (a.first.ticketinfo.time + a.second.ticketinfo.time + a.deltatime != b.first.ticketinfo.time + b.second.ticketinfo.time + b.deltatime) {
+            return a.first.ticketinfo.time + a.second.ticketinfo.time + a.deltatime < b.first.ticketinfo.time + b.second.ticketinfo.time + b.deltatime;
         }
         if (a.first.trainid != b.first.trainid) {
             return a.first.trainid < b.first.trainid;
