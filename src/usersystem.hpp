@@ -40,7 +40,7 @@ struct User {
 
 class UserSystem {
 private:
-    BPlusTree<string20, User, 16> users_{"users"};
+    BPlusTree<string20, User, 64> users_{"users"};
     BPlusTree<bool, string20> loggined_{"loggined"};
 
 public:
