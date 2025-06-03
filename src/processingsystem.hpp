@@ -72,8 +72,8 @@ private:
             std::cout << 0 << "\n";
             return;
         }
-        auto p = usersys.QueryUser(cur_username);
-        if (!p.second || !p.first.loggined || p.first.privilege <= new_user.privilege) {
+        auto [cur_user, cur_idx] = usersys.QueryUser(cur_username);
+        if (cur_idx == -1 || !cur_user.loggined || cur_user.privilege <= new_user.privilege) {
             std::cout << -1 << "\n";
             return;
         }
@@ -91,29 +91,28 @@ private:
                 password = s[i + 1];
             }
         }
-        // std::cerr << username << " " << password << "\n";
-        auto p = usersys.QueryUser(username);
-        // std::cerr << p.second << " " << p.first.username << " " << p.first.loggined << " " << p.first.password << "\n";
-        if (!p.second || p.first.loggined) {
+        auto [user, idx] = usersys.QueryUser(username);
+        if (idx == -1 || user.loggined) {
             std::cout << -1 << "\n";
             return;
         }
-        if (p.first.password != password) {
+        if (user.password != password) {
             std::cout << -1 << "\n";
             return;
         }
-        usersys.Login(p.first);
+        usersys.Login(user, idx);
         std::cout << 0 << "\n";
     }
     void Logout() {
         auto s = GetToken();
         string20 username = s[1];
         auto p = usersys.QueryUser(username);
-        if (!p.second || !p.first.loggined) {
+        auto [user, idx] = usersys.QueryUser(username);
+        if (idx == -1 || !user.loggined) {
             std::cout << -1 << "\n";
             return;
         }
-        usersys.Logout(p.first);
+        usersys.Logout(user, idx);
         std::cout << 0 << "\n";
     }
     void QueryProfile() {
@@ -127,19 +126,17 @@ private:
                 cur_username = s[i + 1];
             }
         }
-        auto p = usersys.QueryUser(username);
-        auto curp = usersys.QueryUser(cur_username);
-        // std::cerr << "test " << username << " " << cur_username << "\n";
-        // std::cerr << "test " << p.second << " " << curp.second << " " << sizeof(User) + sizeof(string20) << "\n";
-        if (!p.second || !curp.second) {
+        auto [user, idx] = usersys.QueryUser(username);
+        auto [cur_user, cur_idx] = usersys.QueryUser(cur_username);
+        if (idx == -1 || cur_idx == -1) {
             std::cout << -1 << "\n";
             return;
         }
-        if (!curp.first.loggined || (curp.first.privilege <= p.first.privilege && username != cur_username)) {
+        if (!cur_user.loggined || (cur_user.privilege <= user.privilege && username != cur_username)) {
             std::cout << -1 << "\n";
             return;
         }
-        std::cout << p.first.username << " " << p.first.name << " " << p.first.mailaddr << " " << p.first.privilege << "\n";
+        std::cout << user.username << " " << user.name << " " << user.mailaddr << " " << user.privilege << "\n";
     }
     void ModifyProfile() {
         auto s = GetToken();
@@ -152,40 +149,37 @@ private:
                 cur_username = s[i + 1];
             }
         }
-        auto p = usersys.QueryUser(username);
-        auto curp = usersys.QueryUser(cur_username);
-        if (!p.second || !curp.second) {
+        auto [user, idx] = usersys.QueryUser(username);
+        auto [curuser, curidx] = usersys.QueryUser(cur_username);
+        if (idx == -1 || curidx == -1) {
             std::cout << -1 << "\n";
             return;
         }
-        if (!curp.first.loggined || (curp.first.privilege <= p.first.privilege && username != cur_username)) {
+        if (!curuser.loggined || (curuser.privilege <= user.privilege && username != cur_username)) {
             std::cout << -1 << "\n";
             return;
         }
         for (int i = 0; i < static_cast<int>(s.size()); i += 2) {
             if (s[i] == "-g") {
                 int priv = std::stoi(s[i + 1]);
-                if (curp.first.privilege <= priv) {
+                if (curuser.privilege <= priv) {
                     std::cout << -1 << "\n";
                     return;
                 }
-                usersys.ModifyPrivilege(p.first, priv);
-                p.first.privilege = priv;
+                user.privilege = priv;
             }
         }
         for (int i = 0; i < static_cast<int>(s.size()); i += 2) {
             if (s[i] == "-p") {
-                usersys.ModifyPassword(p.first, s[i + 1]);
-                p.first.password = s[i + 1];
+                user.password = s[i + 1];
             } else if (s[i] == "-n") {
-                usersys.ModifyName(p.first, s[i + 1]);
-                p.first.name = s[i + 1];
+                user.name = s[i + 1];
             } else if (s[i] == "-m") {
-                usersys.ModifyMail(p.first, s[i + 1]);
-                p.first.mailaddr = s[i + 1];
+                user.mailaddr = s[i + 1];
             }
         }
-        std::cout << p.first.username << " " << p.first.name << " " << p.first.mailaddr << " " << p.first.privilege << "\n";
+        usersys.Modify(user, idx);
+        std::cout << user.username << " " << user.name << " " << user.mailaddr << " " << user.privilege << "\n";
     }
     void AddTrain() {
         auto s = GetToken();
@@ -389,11 +383,11 @@ private:
                 trainid = s[i + 1];
             }
         }
-        auto p = usersys.QueryUser(username);
+        auto [user, idx] = usersys.QueryUser(username);
         // if (timestamp == 348275) {
         //     std::cerr << "test " << p.second << "\n";
         // }
-        if (!p.second || !p.first.loggined) {
+        if (idx == -1 || !user.loggined) {
             std::cout << -1 << "\n";
             return;
         }
@@ -430,8 +424,8 @@ private:
     void QueryOrder() {
         auto s = GetToken();
         string20 username = s[1];
-        auto [user, flag] = usersys.QueryUser(username);
-        if (!flag || !user.loggined) {
+        auto [user, idx] = usersys.QueryUser(username);
+        if (idx == -1 || !user.loggined) {
             std::cout << -1 << "\n";
             return;
         }
@@ -460,8 +454,8 @@ private:
                 n = std::stoi(s[i + 1]);
             }
         }
-        auto [user, flag] = usersys.QueryUser(username);
-        if (!flag || !user.loggined) {
+        auto [user, idx] = usersys.QueryUser(username);
+        if (idx == -1 || !user.loggined) {
             std::cout << -1 << "\n";
             return;
         }

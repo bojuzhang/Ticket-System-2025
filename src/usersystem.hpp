@@ -41,83 +41,60 @@ struct User {
 
 class UserSystem {
 private:
-    BPlusTree<string20, User, 64> users_{"users"};
-    BPlusTree<bool, string20> loggined_{"loggined"};
-    // int idxuser;
+    BPlusTree<string20, int> useridx{"useridx"};
+    MemoryRiver<User> users;
+    BPlusTree<bool, string20> loggined{"loggined"};
 
 public:
     UserSystem() {
-        // idxuser = users_.GetInfo();
+        users.initialise("users", 1);
     }
     ~UserSystem() {
-        // users_.AddInfo(idxuser);
-        auto logins = loggined_.Find(1);
+        auto logins = loggined.Find(1);
         for (auto p : logins) {
-            Logout(QueryUser(p).first);
+            auto tmp = QueryUser(p);
+            Logout(tmp.first, tmp.second);
         }
     }
 
     bool Empty() {
-        return users_.Empty();
+        return users.size() == 0;
     }
 
-    bool AddUser(User &user) {
-        if (users_.Find(user.username).size()) {
+    bool AddUser(const User &user) {
+        if (useridx.Find(user.username).size()) {
             return false;
         }
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-        return 1;
+        int idx = users.write(const_cast<User&>(user));
+        useridx.Insert(user.username, idx);
+        return true;
     }
-    void Login(User user) {
-        users_.Remove(user.username, user);
+    void Login(User user, int idx) {
         user.loggined = 1;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-        loggined_.Insert(1, user.username);
+        users.update(user, idx);
+        loggined.Insert(1, user.username);
     }
-    void Logout(User user) {
-        users_.Remove(user.username, user);
+    void Logout(User user, int idx) {
         user.loggined = 0;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-        loggined_.Remove(1, user.username);
+        users.update(user, idx);
+        loggined.Remove(1, user.username);
     }
-    pair<User, bool> QueryUser(const string20 &username) {
-        auto ve = users_.Find(username);
+    pair<User, int> QueryUser(const string20 &username) {
+        auto ve = useridx.Find(username);
         if (ve.empty()) {
-            return {User(), 0};
+            return {User(), -1};
         }
-        return {ve[0], 1};
+        User ans;
+        users.read(ans, ve[0]);
+        return {ans, ve[0]};
     }
-    void ModifyPassword(User user, const string30 &new_password) {
-        users_.Remove(user.username, user);
-        user.password = new_password;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-    }
-    void ModifyName(User user, const string15 &new_name) {
-        users_.Remove(user.username, user);
-        user.name = new_name;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-    }
-    void ModifyMail(User user, const string30 &new_mail) {
-        users_.Remove(user.username, user);
-        user.mailaddr = new_mail;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
-    }
-    void ModifyPrivilege(User user, const int &new_privilege) {
-        users_.Remove(user.username, user);
-        user.privilege = new_privilege;
-        // user.idx = ++idxuser;
-        users_.Insert(user.username, user);
+    void Modify(const User &user, int idx) {
+        users.update(const_cast<User&>(user), idx);
     }
     void Clear() {
-        users_.Clear();
-        loggined_.Clear();
-        // idxuser = 0;
+        users.clear();
+        loggined.Clear();
+        useridx.Clear();
     }
 };
 
