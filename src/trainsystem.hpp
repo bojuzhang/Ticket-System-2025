@@ -102,8 +102,8 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<ull, ull>, TrainTime, 8, 8> traintime{"traintime"};
-    BPlusTree<pair<ull, ull>, TrainCost, 8, 8> traincost{"traincost"};
+    BPlusTree<pair<ull, ull>, TrainTime, 2, 8> traintime{"traintime"};
+    BPlusTree<pair<ull, ull>, TrainCost, 2, 8> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
         string30 to;
@@ -128,9 +128,9 @@ private:
             return idx != other.idx;
         }
     };
-    BPlusTree<ull, TransferInfo, 16, 16> stations{"stations"};
+    BPlusTree<ull, TransferInfo, 4, 16> stations{"stations"};
     int idxstations;
-    BPlusTree<pair<ull, ull>, TransferInfo, 16, 16> transnext{"transnext"};
+    BPlusTree<pair<ull, ull>, TransferInfo, 4, 16> transnext{"transnext"};
     int idxtransnext;
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
