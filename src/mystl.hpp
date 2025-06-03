@@ -798,4 +798,39 @@ inline ull hash(std::string s) {
     return res;
 }
 
+template <typename T, typename Compare>
+inline void merge_sort(sjtu::vector<T>& vec, Compare comp) {
+    int n = vec.size();
+    if (n < 2) {
+        return;  
+    }
+    int mid = n / 2;
+    sjtu::vector<T> left;
+    for (int i = 0; i < mid; i++) {
+        left.push_back(vec[i]);
+    }
+    sjtu::vector<T> right;
+    for (int i = mid; i < vec.size(); i++) {
+        right.push_back(vec[i]);
+    }
+    merge_sort(left, comp);
+    merge_sort(right, comp);
+    sjtu::vector<T> merged;
+    int i = 0, j = 0;
+    while (i < left.size() && j < right.size()) {
+        if (!comp(right[j], left[i])) {
+            merged.push_back(std::move(left[i++]));
+        } else {
+            merged.push_back(std::move(right[j++]));
+        }
+    }
+    while (i < left.size()) {
+        merged.push_back(std::move(left[i++]));
+    }
+    while (j < right.size()) {
+        merged.push_back(std::move(right[j++]));
+    }
+    vec = std::move(merged);
+}
+
 #endif // MYSTL_HPP
