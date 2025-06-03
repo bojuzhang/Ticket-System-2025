@@ -13,7 +13,7 @@ using sjtu::MemoryRiver;
 using sjtu::pair;
 using sjtu::vector;
 
-template <class TKey, class TValue, int kPLUS = 2, int kCACHESIZE = 24>
+template <class TKey, class TValue, int kPLUS = 1, int kCACHESIZE = 24>
 class BPlusTree {
 private:
     static const int kORDER = ((4096 * kPLUS - 10) / (sizeof(TKey) + sizeof(TValue) + 4) - 1) / 2 * 2 + 1; 
@@ -47,7 +47,7 @@ private:
 
 public:
     BPlusTree(const std::string &filename) {
-        // std::cerr << "test " << filename << " " << kORDER << "\n";
+        std::cerr << "test " << filename << " " << kORDER << "\n";
         if (!std::filesystem::exists(filename)) {
             file.initialise(filename, 1);
             Node root;

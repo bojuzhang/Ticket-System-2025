@@ -110,8 +110,8 @@ private:
         pair<pair<int, int>, pair<int, int>> saledates;
     };
     MemoryRiver<TransferInfo> transidx;
-    BPlusTree<ull, int, 2, 8> stations{"stations"};
-    BPlusTree<pair<ull, ull>, int, 2, 8> transnext{"transnext"};
+    BPlusTree<ull, int> stations{"stations"};
+    BPlusTree<pair<ull, ull>, int> transnext{"transnext"};
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
         date.second += x;
