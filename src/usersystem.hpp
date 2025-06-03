@@ -41,7 +41,7 @@ struct User {
 
 class UserSystem {
 private:
-    BPlusTree<string20, int> useridx{"useridx"};
+    BPlusTree<ull, int> useridx{"useridx"};
     MemoryRiver<User> users;
     BPlusTree<bool, string20> loggined{"loggined"};
 
@@ -62,11 +62,11 @@ public:
     }
 
     bool AddUser(const User &user) {
-        if (useridx.Find(user.username).size()) {
+        if (useridx.Find(hash(user.username)).size()) {
             return false;
         }
         int idx = users.write(const_cast<User&>(user));
-        useridx.Insert(user.username, idx);
+        useridx.Insert(hash(user.username), idx);
         return true;
     }
     void Login(User user, int idx) {
@@ -80,7 +80,7 @@ public:
         loggined.Remove(1, user.username);
     }
     pair<User, int> QueryUser(const string20 &username) {
-        auto ve = useridx.Find(username);
+        auto ve = useridx.Find(hash(username));
         if (ve.empty()) {
             return {User(), -1};
         }

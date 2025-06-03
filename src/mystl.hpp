@@ -788,4 +788,14 @@ public:
 
 } // namespace sjtu
 
+using ull = unsigned long long;
+inline ull hash(std::string s) {
+    static constexpr ull base = 2333;
+    ull res = 0;
+    for (auto c : s) {
+        res = res * 10 + c;
+    }
+    return res;
+}
+
 #endif // MYSTL_HPP

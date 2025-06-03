@@ -36,8 +36,8 @@ struct Order {
 
 class OrderSystem {
 private:
-    BPlusTree<string20, Order> userorder{"userorder"};
-    BPlusTree<string20, Order> trainorder{"trainorder"};
+    BPlusTree<ull, Order> userorder{"userorder"};
+    BPlusTree<ull, Order> trainorder{"trainorder"};
 
 public:
     void Clear() {
@@ -45,34 +45,34 @@ public:
         trainorder.Clear();
     }
     void AddOrder(const Order &order) {
-        userorder.Insert(order.username, order);
+        userorder.Insert(hash(order.username), order);
         if (order.status == OrderStatus::kPENDING) {
-            trainorder.Insert(order.trainid, order);
+            trainorder.Insert(hash(order.trainid), order);
         }
     }
     void DelOrder(const Order &order) {
-        userorder.Remove(order.username, order);
+        userorder.Remove(hash(order.username), order);
         if (order.status == OrderStatus::kPENDING) {
-            trainorder.Remove(order.trainid, order);
+            trainorder.Remove(hash(order.trainid), order);
         }
     }
     vector<Order> GetRefund(const string20 &trainid) {
-        return trainorder.Find(trainid);
+        return trainorder.Find(hash(trainid));
     }
     bool Refund(Order order) {
         if (order.status == OrderStatus::kREFUNDED) {
             return false;
         }
-        userorder.Remove(order.username, order);
+        userorder.Remove(hash(order.username), order);
         if (order.status == OrderStatus::kPENDING) {
-            trainorder.Remove(order.trainid, order);
+            trainorder.Remove(hash(order.trainid), order);
         }
         order.status = OrderStatus::kREFUNDED;
-        userorder.Insert(order.username, order);
+        userorder.Insert(hash(order.username), order);
         return true;
     }
     vector<Order> QueryOrder(const string20 &username) {
-        return  userorder.Find(username);
+        return  userorder.Find(hash(username));
     }
 };
 

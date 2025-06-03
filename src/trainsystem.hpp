@@ -44,14 +44,14 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<string20, int> trainidx{"trainidx"};
+    BPlusTree<ull, int> trainidx{"trainidx"};
     sjtu::MemoryRiver<Train> trains;
-    BPlusTree<string20, bool> released{"released"};
+    BPlusTree<ull, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
         MyArray<int, 100> seats;
     };
-    using TrainInDay = pair<pair<int, int>, string20>; // date, id
+    using TrainInDay = pair<pair<int, int>, ull>; // date, id
     BPlusTree<TrainInDay, int> remainseatidx{"remainseatidx"};
     MemoryRiver<RemainSeat> remainseat;
     struct TrainTicket {
@@ -102,8 +102,8 @@ private:
             return !((*this) == other);
         }
     };
-    BPlusTree<pair<string30, string30>, TrainTime, 8, 8> traintime{"traintime"};
-    BPlusTree<pair<string30, string30>, TrainCost, 8, 8> traincost{"traincost"};
+    BPlusTree<pair<ull, ull>, TrainTime, 8, 8> traintime{"traintime"};
+    BPlusTree<pair<ull, ull>, TrainCost, 8, 8> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
         string30 to;
@@ -128,9 +128,9 @@ private:
             return idx != other.idx;
         }
     };
-    BPlusTree<string30, TransferInfo, 16, 16> stations{"stations"};
+    BPlusTree<ull, TransferInfo, 16, 16> stations{"stations"};
     int idxstations;
-    BPlusTree<pair<string30, string30>, TransferInfo, 16, 16> transnext{"transnext"};
+    BPlusTree<pair<ull, ull>, TransferInfo, 16, 16> transnext{"transnext"};
     int idxtransnext;
 
     pair<int, int> AddDay(pair<int, int> date, int x) {
@@ -169,36 +169,36 @@ public:
         idxstations = idxtransnext = 0;
     }
     bool AddTrain(const Train &train) {
-        if (trainidx.Find(train.trainid).size()) {
+        if (trainidx.Find(hash(train.trainid)).size()) {
             return false;
         }
         int idx = trains.write(const_cast<Train&>(train));
-        trainidx.Insert(train.trainid, idx);
+        trainidx.Insert(hash(train.trainid), idx);
         return true;
     }
     bool DeleteTrain(const string20 &trainid) {
-        auto p = trainidx.Find(trainid);
+        auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return false;
         }
         int idx = p[0];
         Train train;
         trains.read(train, idx);
-        if (released.Find(trainid).size()) {
+        if (released.Find(hash(trainid)).size()) {
             return false;
         }
-        trainidx.Remove(trainid, idx);
+        trainidx.Remove(hash(trainid), idx);
         return true;
     }
     bool ReleaseTrain(const string20 &trainid) {
-        auto p = trainidx.Find(trainid);
+        auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return false;
         }
         int idx = p[0];
         Train train;
         trains.read(train, idx);
-        if (released.Find(trainid).size()) {
+        if (released.Find(hash(trainid)).size()) {
             return false;
         }
         RemainSeat t;
@@ -214,7 +214,7 @@ public:
             for (int d = db; d <= de; d++) {        
                 int idx = remainseat.write(t);
                 // std::cerr << idx << " " << train.trainid << "\n";
-                remainseatidx.Insert({pair{m, d}, trainid}, idx);
+                remainseatidx.Insert({pair{m, d}, hash(trainid)}, idx);
             }
         }
         int sminutes = train.starttime.first * 60 + train.starttime.second;
@@ -228,8 +228,8 @@ public:
                 int minutes = sminutes + time;
                 arr[0] = minutes % 1440 / 60, arr[1] = minutes % 1440 % 60;
                 TrainTicket ticket = {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i, j};
-                traintime.Insert(pair{train.stations[i], train.stations[j]}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i, j});
-                traincost.Insert(pair{train.stations[i], train.stations[j]}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i, j});
+                traintime.Insert(pair{hash(train.stations[i]), hash(train.stations[j])}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i, j});
+                traincost.Insert(pair{hash(train.stations[i]), hash(train.stations[j])}, {trainid, addday, lea, arr, minutes / 1440 - sminutes / 1440, time, cost, i, j});
                 time += train.stopovertimes[j - 1] + train.traveltimes[j];
                 cost += train.prices[j];
                 TransferInfo trans;
@@ -237,14 +237,14 @@ public:
                 trans.to = train.stations[j];
                 trans.saledates = train.saledates;
                 trans.idx = ++idxstations;
-                stations.Insert(train.stations[i], trans);
+                stations.Insert(hash(train.stations[i]), trans);
                 trans.idx = ++idxtransnext;
-                transnext.Insert({train.stations[i], train.stations[j]}, trans);
+                transnext.Insert({hash(train.stations[i]), hash(train.stations[j])}, trans);
             }
             sminutes += train.traveltimes[i];
             if (i + 1 < train.stationnum) sminutes += train.stopovertimes[i];
         }
-        released.Insert(trainid, 1);
+        released.Insert(hash(trainid), 1);
         return true;
     }
     struct TrainInfo {
@@ -253,7 +253,7 @@ public:
         int price, seat;
     };
     pair<vector<TrainInfo>, char> QueryTrain(const string20 &trainid, pair<int, int> date) {
-        auto p = trainidx.Find(trainid);
+        auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return {};
         }
@@ -310,9 +310,9 @@ public:
         lea[0] = lea[1] = lea[2] = lea[3] = -1;
         prices += train.prices[train.stationnum - 2];
         ans.push_back({train.stations[train.stationnum - 1], arr, lea, prices, -1});
-        if (released.Find(trainid).size()) {
+        if (released.Find(hash(trainid)).size()) {
             m = date.first, d = date.second;
-            int idx = remainseatidx.Find(pair{pair{m, d}, trainid})[0];
+            int idx = remainseatidx.Find(pair{pair{m, d}, hash(trainid)})[0];
             RemainSeat p;
             remainseat.read(p, idx);
             for (int i = 0; i + 1 < train.stationnum; i++) {
@@ -350,7 +350,7 @@ public:
         // if (Debug) {
         //     std::cerr << "time: " << am << " " << ad << "\n";
         // }
-        auto seatidxs = remainseatidx.Find(pair{pair{am, ad}, t.trainid});
+        auto seatidxs = remainseatidx.Find(pair{pair{am, ad}, hash(t.trainid)});
         if (!seatidxs.size()) {
             return {TicketInfo(), 0};
         } 
@@ -373,7 +373,7 @@ public:
         vector<TicketInfo> ans;
         int m = date.first, d = date.second;
         if (ord == TicketOrder::kTIME) {
-            auto ve = traintime.Find(pair{st, ed});
+            auto ve = traintime.Find(pair{hash(st), hash(ed)});
             MyArray<int, 4> lea, arr;
             for (auto p : ve) {
                 auto [t, has] = GetTicketInfo(p, m, d, st, ed);
@@ -383,7 +383,7 @@ public:
                 ans.push_back(t);
             }
         } else {
-            auto ve = traincost.Find(pair{st, ed});
+            auto ve = traincost.Find(pair{hash(st), hash(ed)});
             for (auto p : ve) {
                 auto [t, has] = GetTicketInfo(p, m, d, st, ed);
                 if (!has) {
@@ -400,7 +400,7 @@ public:
     };
     // 0: no train; 1: no tickets; 2: normal
     pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string30 &st, const string30 &ed, int n) {
-        auto p = trainidx.Find(trainid);
+        auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return {OrderInfo(), 0};
         }
@@ -502,7 +502,7 @@ public:
         if (Debug) {
             std::cerr << "date: " << date.first << " " << date.second << " " << adddays << "\n";
         }
-        auto q = remainseatidx.Find(pair{date, trainid});
+        auto q = remainseatidx.Find(pair{date, hash(trainid)});
         if (!q.size()) {
             return {OrderInfo(), 0};
         }
@@ -600,14 +600,14 @@ public:
         };
         TransferTicket ans;
         bool has_ans = 0;
-        auto transsstaions = stations.Find(st);
+        auto transsstaions = stations.Find(hash(st));
         for (auto p1 : transsstaions) {
             auto &trans = p1.to;
             auto [t1, has1] = GetTicketInfo(p1.ticket, date.first, date.second, st, trans);
             if (!has1) {
                 continue;
             }
-            auto q = transnext.Find({trans, ed});
+            auto q = transnext.Find({hash(trans), hash(ed)});
             if (!q.size()) {
                 continue;
             }
