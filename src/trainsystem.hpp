@@ -409,6 +409,9 @@ public:
             return {OrderInfo(), 0};
         }
         auto train = p[0];
+        if (n > train.seatnum) {
+            return {OrderInfo(), 0};
+        }
         bool flag = 0;
         OrderInfo order;
         int m = date.first, d = date.second;
@@ -510,6 +513,9 @@ public:
             if (train.stations[i] == st) {
                 flag = 1;
             }
+            if (!flag && train.stations[i] == ed) {
+                return {OrderInfo(), 0};
+            }
             if (train.stations[i] == ed) {
                 flag = 0;
             }
@@ -542,20 +548,20 @@ public:
             }
         }
         auto tmp = remainseat.Remove(pair{date, trainid}, seats);
-        if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
-            std::cerr << "remove find successfully: " << tmp << "\n";
-            std::cerr << "test buy: " << date.first << " " << date.second << " " << n << "\n";
-            if (n < 0) {
-                std::cerr << "test: " << st << " " << ed << " " << adddays << "\n";
-            }
-        }
-        if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
-            std::cerr << "before:\n";
-            for (int i = 0; i < train.stationnum; i++) {
-                std::cerr << seats.seats[i] << " ";
-            }
-            std::cerr << "\n";
-        }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
+        //     std::cerr << "remove find successfully: " << tmp << "\n";
+        //     std::cerr << "test buy: " << date.first << " " << date.second << " " << n << "\n";
+        //     if (n < 0) {
+        //         std::cerr << "test: " << st << " " << ed << " " << adddays << "\n";
+        //     }
+        // }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
+        //     std::cerr << "before:\n";
+        //     for (int i = 0; i < train.stationnum; i++) {
+        //         std::cerr << seats.seats[i] << " ";
+        //     }
+        //     std::cerr << "\n";
+        // }
         flag = 0;
         for (int i = 0; i < train.stationnum; i++) {
             if (train.stations[i] == st) {
@@ -568,16 +574,16 @@ public:
                 seats.seats[i] -= n;
             }
         }
-        if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
-            std::cerr << "after\n";
-            for (int i = 0; i < train.stationnum; i++) {
-                std::cerr << seats.seats[i] << " ";
-            }
-            std::cerr << "\n";
-        }
-        if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
-            std::cerr << "dfshgfhsdgfhds: " << remainseat.Find({date, trainid}).size() << "\n";
-        }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
+        //     std::cerr << "after\n";
+        //     for (int i = 0; i < train.stationnum; i++) {
+        //         std::cerr << seats.seats[i] << " ";
+        //     }
+        //     std::cerr << "\n";
+        // }
+        // if (trainid == std::string("LeavesofGrass") && date.first == 8 && date.second == 3) {
+        //     std::cerr << "dfshgfhsdgfhds: " << remainseat.Find({date, trainid}).size() << "\n";
+        // }
         remainseat.Insert(pair{date, trainid}, seats);
         
         return {order, 2};

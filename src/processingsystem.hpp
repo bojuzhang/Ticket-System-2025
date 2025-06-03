@@ -390,16 +390,16 @@ private:
             }
         }
         auto p = usersys.QueryUser(username);
-        if (timestamp == 348275) {
-            std::cerr << "test " << p.second << "\n";
-        }
+        // if (timestamp == 348275) {
+        //     std::cerr << "test " << p.second << "\n";
+        // }
         if (!p.second || !p.first.loggined) {
             std::cout << -1 << "\n";
             return;
         }
-        if (timestamp == 348275) {
-            std::cerr << "is logined\n";
-        }
+        // if (timestamp == 348275) {
+        //     std::cerr << "is logined\n";
+        // }
         auto [orderinfo, hasticket] = trainsys.BuyTickets(trainid, date, from, to, n);
         Order order;
         order.orderinfo = orderinfo;
@@ -512,7 +512,7 @@ public:
         std::string times, op;
         while (std::cin >> times >> op) {
             int timestamp = std::stoi(times.substr(1, times.size() - 2));
-            if (timestamp == 287510) trainsys.Debug = 1;
+            // if (timestamp == 287510) trainsys.Debug = 1;
             std::cout << times << " ";
             if (op == "add_user") {
                 AddUser();
