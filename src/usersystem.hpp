@@ -17,6 +17,7 @@ struct User {
     string30 mailaddr;
     int privilege;
     bool loggined = 0;
+    // int idx;
 
     bool operator < (const User &other) {
         return username < other.username;
@@ -42,9 +43,14 @@ class UserSystem {
 private:
     BPlusTree<string20, User, 64> users_{"users"};
     BPlusTree<bool, string20> loggined_{"loggined"};
+    // int idxuser;
 
 public:
+    UserSystem() {
+        // idxuser = users_.GetInfo();
+    }
     ~UserSystem() {
+        // users_.AddInfo(idxuser);
         auto logins = loggined_.Find(1);
         for (auto p : logins) {
             Logout(QueryUser(p).first);
@@ -55,32 +61,25 @@ public:
         return users_.Empty();
     }
 
-    bool AddUser(const User &user) {
+    bool AddUser(User &user) {
         if (users_.Find(user.username).size()) {
             return false;
         }
-        // std::cerr << "adduser: " << user.username << "\n";
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
         return 1;
     }
     void Login(User user) {
-        // std::cerr << "testlogin0: " << users_.Find(user.username).size() << "\n";
         users_.Remove(user.username, user);
-        // std::cerr << "testlogin0: " << users_.Find(user.username).size() << "\n";
         user.loggined = 1;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
-        // std::cerr << "testlogin1: " << user.username << " " << users_.Find(user.username).size() << "\n";
-        // auto p = users_.Allvalues();
-        // std::cerr << "allnode\n";
-        // for (auto x : p) {
-        //     std::cerr << x.username << " ";
-        // }
-        // std::cerr << "\n";
         loggined_.Insert(1, user.username);
     }
     void Logout(User user) {
         users_.Remove(user.username, user);
         user.loggined = 0;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
         loggined_.Remove(1, user.username);
     }
@@ -94,26 +93,31 @@ public:
     void ModifyPassword(User user, const string30 &new_password) {
         users_.Remove(user.username, user);
         user.password = new_password;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
     }
     void ModifyName(User user, const string15 &new_name) {
         users_.Remove(user.username, user);
         user.name = new_name;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
     }
     void ModifyMail(User user, const string30 &new_mail) {
         users_.Remove(user.username, user);
         user.mailaddr = new_mail;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
     }
     void ModifyPrivilege(User user, const int &new_privilege) {
         users_.Remove(user.username, user);
         user.privilege = new_privilege;
+        // user.idx = ++idxuser;
         users_.Insert(user.username, user);
     }
     void Clear() {
         users_.Clear();
         loggined_.Clear();
+        // idxuser = 0;
     }
 };
 

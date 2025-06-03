@@ -75,6 +75,15 @@ public:
         rootpos = AddNode(root);
     }
 
+    void AddInfo(int x) {
+        file.write_info(x, 4);
+    }
+    int GetInfo() {
+        int tmp;
+        file.get_info(tmp, 4);
+        return tmp;
+    }
+
     bool Empty() {
         Node root = ReadNode(rootpos);
         return root.isleaf && root.keycount == 0;
