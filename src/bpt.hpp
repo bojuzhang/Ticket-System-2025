@@ -168,8 +168,8 @@ public:
         }
     }
 
-    void Remove(const TKey &key, const TValue &value) {
-        RemoveRec(rootpos, pair{key, value});
+    bool Remove(const TKey &key, const TValue &value) {
+        return RemoveRec(rootpos, pair{key, value});
     }
 
     bool RemoveRec(int pos, const kv_type &item, int parent = -1, int idx = -1, const Node &p = Node(false)) {
@@ -200,9 +200,9 @@ public:
             if (!merged) {
                 return false;
             }
-            if (pos == rootpos) {
-                return false;
-            }
+            // if (pos == rootpos) {
+            //     return false;
+            // }
             return true;
         }
     }

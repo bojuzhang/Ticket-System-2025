@@ -44,19 +44,43 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<string20, Train, 128, 8> trains{"trains"};
+    BPlusTree<string20, Train> trains{"trains"};
     BPlusTree<string20, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
         MyArray<int, 100> seats;
         bool operator < (const RemainSeat &other) {
-            return stationnum < other.stationnum;
+            if (stationnum != other.stationnum) {
+                return stationnum < other.stationnum;
+            }
+            for (int k = 0; k < stationnum; k++) {
+                if (seats[k] != other.seats[k]) {
+                    return seats[k] < other.seats[k];
+                }
+            }
+            return false;
         }
         bool operator > (const RemainSeat &other) {
-            return stationnum > other.stationnum;
+            if (stationnum != other.stationnum) {
+                return stationnum > other.stationnum;
+            }
+            for (int k = 0; k < stationnum; k++) {
+                if (seats[k] != other.seats[k]) {
+                    return seats[k] > other.seats[k];
+                }
+            }
+            return false;
         }
         bool operator == (const RemainSeat &other) {
-            return stationnum == other.stationnum;
+            if (stationnum != other.stationnum) {
+                return false;
+            }
+            for (int k = 0; k < stationnum; k++) {
+                if (seats[k] != other.seats[k]) {
+                    return false;
+                }
+            }
+            return true;
         }
         bool operator <= (const RemainSeat &other) {
             return !((*this) > other);
@@ -69,7 +93,7 @@ private:
         }
     };
     using TrainInDay = pair<pair<int, int>, string20>; // date, id
-    BPlusTree<TrainInDay, RemainSeat, 128> remainseat{"remainseat"};
+    BPlusTree<TrainInDay, RemainSeat> remainseat{"remainseat"};
     struct TrainTicket {
         string20 trainid;
         int addday;
@@ -508,14 +532,15 @@ public:
                 }
             }
         }
-        remainseat.Remove(pair{date, trainid}, seats);
-        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        auto tmp = remainseat.Remove(pair{date, trainid}, seats);
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 14) {
+        //     std::cerr << "remove find successfully: " << tmp << "\n";
         //     std::cerr << "test buy: " << date.first << " " << date.second << " " << n << "\n";
         //     if (n < 0) {
         //         std::cerr << "test: " << st << " " << ed << " " << adddays << "\n";
         //     }
         // }
-        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 14) {
         //     std::cerr << "before:\n";
         //     for (int i = 0; i < train.stationnum; i++) {
         //         std::cerr << seats.seats[i] << " ";
@@ -534,14 +559,14 @@ public:
                 seats.seats[i] -= n;
             }
         }
-        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 14) {
         //     std::cerr << "after\n";
         //     for (int i = 0; i < train.stationnum; i++) {
         //         std::cerr << seats.seats[i] << " ";
         //     }
         //     std::cerr << "\n";
         // }
-        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 2) {
+        // if (trainid == std::string("LeavesofGrass") && date.first == 7 && date.second == 14) {
         //     std::cerr << "dfshgfhsdgfhds: " << remainseat.Find({date, trainid}).size() << "\n";
         // }
         remainseat.Insert(pair{date, trainid}, seats);
@@ -610,6 +635,9 @@ public:
             // std::cerr << "test " << st << " " << trans << "\n";
             pair<int, int> todate = {t1.arriving[0], t1.arriving[1]};
             for (auto p2 : q) {
+                if (p2.ticket.trainid == t1.trainid) {
+                    continue;
+                }
                 pair<int, int> realdatel = p2.saledates.first, realdater = p2.saledates.second;
                 realdatel = AddDay(realdatel, p2.ticket.addday);
                 realdater = AddDay(realdater, p2.ticket.addday);
