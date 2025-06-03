@@ -17,10 +17,10 @@ struct Train {
     MyArray<string30, 100> stations;
     int seatnum;
     MyArray<int, 100> prices;
-    pair<int, int> starttime; // (hh, mm)
+    pair<short, short> starttime; // (hh, mm)
     MyArray<int, 100> traveltimes;
     MyArray<int, 100> stopovertimes;
-    pair<pair<int, int>, pair<int, int>> saledates; // (begin, end); (mm, dd);
+    pair<pair<short, short>, pair<short, short>> saledates; // (begin, end); (mm, dd);
     char type;
     bool operator < (const Train &other) {
         return trainid < other.trainid;
@@ -44,14 +44,14 @@ struct Train {
 
 class TrainSystem {
 private:
-    BPlusTree<ull, int> trainidx{"trainidx"};
+    BPlusTree<ull, short> trainidx{"trainidx"};
     sjtu::MemoryRiver<Train> trains;
     BPlusTree<ull, bool> released{"released"};
     struct RemainSeat {
         int stationnum;
         MyArray<int, 100> seats;
     };
-    using TrainInDay = pair<pair<int, int>, ull>; // date, id
+    using TrainInDay = pair<pair<short, short>, ull>; // date, id
     BPlusTree<TrainInDay, int> remainseatidx{"remainseatidx"};
     MemoryRiver<RemainSeat> remainseat;
     struct TrainTicket {
@@ -106,13 +106,13 @@ private:
     BPlusTree<pair<ull, ull>, TrainCost, 4, 8> traincost{"traincost"};
     struct TransferInfo {
         TrainTicket ticket;
-        pair<pair<int, int>, pair<int, int>> saledates;
+        pair<pair<short, short>, pair<short, short>> saledates;
     };
     MemoryRiver<TransferInfo> transidx;
     BPlusTree<ull, string20> stationtrains{"stationtrains"};
     BPlusTree<pair<ull, ull>, int> transnext{"transnext"};
 
-    pair<int, int> AddDay(pair<int, int> date, int x) {
+    pair<short, short> AddDay(pair<short, short> date, int x) {
         date.second += x;
         if (date.second > (date.first == 6 ? 30 : 31)) {
             date.second -= (date.first == 6 ? 30 : 31);
@@ -220,10 +220,10 @@ public:
     }
     struct TrainInfo {
         string30 station;
-        MyArray<int, 4> arriving, leaving;
+        MyArray<short, 4> arriving, leaving;
         int price, seat;
     };
-    pair<vector<TrainInfo>, char> QueryTrain(const string20 &trainid, pair<int, int> date) {
+    pair<vector<TrainInfo>, char> QueryTrain(const string20 &trainid, pair<short, short> date) {
         auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return {};
@@ -238,7 +238,7 @@ public:
             return {};
         }
         vector<TrainInfo> ans;
-        MyArray<int, 4> arr, lea;
+        MyArray<short, 4> arr, lea;
         arr[0] = arr[1] = arr[2] = arr[3] = -1;
         lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
         ans.push_back({train.stations[0], arr, lea, 0, train.seatnum});
@@ -295,13 +295,13 @@ public:
     struct TicketInfo {
         string20 trainid;
         string30 from, to;
-        MyArray<int, 4> arriving, leaving;
+        MyArray<short, 4> arriving, leaving;
         int price, seat;
         TrainTicket ticketinfo;
     }; 
     enum class TicketOrder {kTIME, kCOST};
     pair<TicketInfo, bool> GetTicketInfo(const TrainTicket &p, int m, int d, const string30 &st, const string30 &ed) {
-        MyArray<int, 4> lea, arr;
+        MyArray<short, 4> lea, arr;
         TicketInfo t;
         t.trainid = p.trainid;
         t.from = st, t.to = ed;
@@ -340,12 +340,12 @@ public:
         t.ticketinfo = p;
         return {t, 1};
     }
-    vector<TicketInfo> QueryTicket(const string30 &st, const string30 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kTIME) {
+    vector<TicketInfo> QueryTicket(const string30 &st, const string30 &ed, pair<short, short> date, TicketOrder ord = TrainSystem::TicketOrder::kTIME) {
         vector<TicketInfo> ans;
         int m = date.first, d = date.second;
         if (ord == TicketOrder::kTIME) {
             auto ve = traintime.Find(pair{hash(st), hash(ed)});
-            MyArray<int, 4> lea, arr;
+            MyArray<short, 4> lea, arr;
             for (auto p : ve) {
                 auto [t, has] = GetTicketInfo(p, m, d, st, ed);
                 if (!has) {
@@ -366,11 +366,11 @@ public:
         return ans;
     }
     struct OrderInfo {
-        MyArray<int, 4> leaving, arriving;
+        MyArray<short, 4> leaving, arriving;
         int price = 0;
     };
     // 0: no train; 1: no tickets; 2: normal
-    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<int, int> date, const string30 &st, const string30 &ed, int n) {
+    pair<OrderInfo, int> BuyTickets(const string20 &trainid, pair<short, short> date, const string30 &st, const string30 &ed, int n) {
         auto p = trainidx.Find(hash(trainid));
         if (!p.size()) {
             return {OrderInfo(), 0};
@@ -384,7 +384,7 @@ public:
         bool flag = 0;
         OrderInfo order;
         int m = date.first, d = date.second;
-        MyArray<int, 4> lea, arr;
+        MyArray<short, 4> lea, arr;
         int adddays = 0;
         arr[0] = arr[1] = arr[2] = arr[3] = -1;
         lea[0] = m, lea[1] = d, lea[2] = train.starttime.first, lea[3] = train.starttime.second;
@@ -552,8 +552,8 @@ public:
         }
         return a.second.trainid < b.second.trainid;
     }
-    pair<TransferTicket, bool> QueryTransfer(const string30 &st, const string30 &ed, pair<int, int> date, TicketOrder ord = TrainSystem::TicketOrder::kTIME) {
-        auto get_delta = [&](MyArray<int, 4> a, MyArray<int, 4> b) {
+    pair<TransferTicket, bool> QueryTransfer(const string30 &st, const string30 &ed, pair<short, short> date, TicketOrder ord = TrainSystem::TicketOrder::kTIME) {
+        auto get_delta = [&](MyArray<short, 4> a, MyArray<short, 4> b) {
             int res = 0;
             if (a[0] == b[0]) {
                 res = (b[1] - a[1]) * 24 * 60;
@@ -617,14 +617,14 @@ public:
                         //     std::cerr << t1.price << " " << t1.seat << "\n";
                         // }
                         // std::cerr << "test " << st << " " << trans << "\n";
-                        pair<int, int> todate = {t1.arriving[0], t1.arriving[1]};
+                        pair<short, short> todate = {t1.arriving[0], t1.arriving[1]};
                         for (auto pos2 : q) {
                             TransferInfo p2;
                             transidx.read(p2, pos2);
                             if (p2.ticket.trainid == t1.trainid) {
                                 continue;
                             }
-                            pair<int, int> realdatel = p2.saledates.first, realdater = p2.saledates.second;
+                            pair<short, short> realdatel = p2.saledates.first, realdater = p2.saledates.second;
                             realdatel = AddDay(realdatel, p2.ticket.addday);
                             realdater = AddDay(realdater, p2.ticket.addday);
                             // std::cerr << realdatel.first << " " << realdatel.second << "\n";
@@ -632,7 +632,7 @@ public:
                             if (todate > realdater) {
                                 continue;
                             }
-                            pair<int, int> transferdate;
+                            pair<short, short> transferdate;
                             if (todate < realdatel) {
                                 transferdate = realdatel;
                             } else if (pair{t1.arriving[2], t1.arriving[3]} > pair{p2.ticket.leaving[0], p2.ticket.leaving[1]}) {

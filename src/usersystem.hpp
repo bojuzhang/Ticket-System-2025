@@ -15,7 +15,7 @@ struct User {
     string30 password;
     string15 name;
     string30 mailaddr;
-    int privilege;
+    short privilege;
     bool loggined = 0;
     // int idx;
 
@@ -41,7 +41,7 @@ struct User {
 
 class UserSystem {
 private:
-    BPlusTree<ull, int> useridx{"useridx"};
+    BPlusTree<ull, short> useridx{"useridx"};
     MemoryRiver<User> users;
     BPlusTree<bool, string20> loggined{"loggined"};
 
